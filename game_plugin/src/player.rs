@@ -27,12 +27,18 @@ fn spawn_camera(mut commands: Commands) {
 fn spawn_player(
     mut commands: Commands,
     textures: Res<TextureAssets>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
+    let texture_handle = textures.texture_tileset.clone().into();
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+    // Spawn Player
     commands
-        .spawn_bundle(SpriteBundle {
-            material: materials.add(textures.texture_bevy.clone().into()),
+        .spawn_bundle(SpriteSheetBundle {
+            texture_atlas: texture_atlas_handle.clone(),
             transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
+            sprite: TextureAtlasSprite::new(188),
             ..Default::default()
         })
         .insert(Player);
