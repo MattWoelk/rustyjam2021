@@ -31,13 +31,26 @@ fn spawn_enemy(
             sprite: TextureAtlasSprite::new(189),
             ..Default::default()
         })
+        .insert(Timer::from_seconds(0.1, true))
         .insert(Enemy);
 }
 
 fn move_enemy(
-    mut query: Query<&mut Transform, With<Enemy>>,
+    time: Res<Time>,
+    mut movement_query: Query<&mut Transform, With<Enemy>>,
+    mut sprite_query: Query<(&mut Timer, &mut TextureAtlasSprite)>,
 ) {
-    for mut transform in query.iter_mut() {
+    for mut transform in movement_query.iter_mut() {
         transform.translation += Vec3::new(0., 4., 0.);
+    }
+
+    // rapidly swap its texture, like it's an animation or something.
+    let anim_sprite_sheet_indices: [u32; 2] = [189, (189-24)];
+    for (mut timer, mut sprite) in sprite_query.iter_mut() {
+        timer.tick(time.delta());
+        if timer.finished() {
+            let current_index = anim_sprite_sheet_indices.iter().position(|&x| x == sprite.index).unwrap();
+            sprite.index = anim_sprite_sheet_indices[(current_index + 1) % anim_sprite_sheet_indices.len()];
+        }
     }
 }
