@@ -1,4 +1,3 @@
-use crate::actions::Actions;
 use crate::loading::TextureAssets;
 use crate::GameState;
 use bevy::prelude::*;
@@ -36,8 +35,6 @@ fn spawn_enemy(
 }
 
 fn move_enemy(
-    time: Res<Time>,
-    actions: Res<Actions>,
     mut query: Query<&mut Transform, With<Enemy>>,
 ) {
     for mut transform in query.iter_mut() {
