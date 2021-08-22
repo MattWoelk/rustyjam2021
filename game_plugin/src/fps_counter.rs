@@ -27,20 +27,21 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 align_self: AlignSelf::FlexEnd,
                 position_type: PositionType::Absolute,
                 position: Rect {
-                    bottom: Val::Px(215.0),
-                    right: Val::Px(215.0),
-                    ..Default::default()
+                    left: Val::Px(25.),
+                    right: Val::Px(25.),
+                    bottom: Val::Px(25.),
+                    top: Val::Px(420.),
                 },
-                max_size: Size::new(Val::Px(215.), Val::Px(215.)),
+                max_size: Size::new(Val::Px(910.), Val::Px(515.)),
                 ..Default::default()
             },
             // Use the `Text::with_section` constructor
             text: Text::with_section(
                 // Accepts a `String` or any type that converts into a `String`, such as `&str`
-                "hello\nbevy this is a long line",
+                "This is example text at the bottom of the screen. Two whole complete sentences worth! Wowzers! This is example text at the bottom of the screen. Two whole complete sentences worth! Wowzers! This is example text at the bottom of the screen. Two whole complete sentences worth! Wowzers!",
                 TextStyle {
                     font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                    font_size: 100.0,
+                    font_size: 25.0,
                     color: Color::WHITE,
                 },
                 // Note: You can use `Default::default()` in place of the `TextAlignment`
