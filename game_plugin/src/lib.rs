@@ -1,17 +1,19 @@
 mod actions;
 mod audio;
+mod enemy;
+mod fps_counter;
 mod loading;
 mod menu;
 mod player;
-mod enemy;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
+use crate::enemy::EnemyPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
 use crate::player::PlayerPlugin;
-use crate::enemy::EnemyPlugin;
 
+use crate::fps_counter::FPSCounterPlugin;
 use bevy::app::AppBuilder;
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
@@ -41,6 +43,7 @@ impl Plugin for GamePlugin {
             .add_plugin(InternalAudioPlugin)
             .add_plugin(PlayerPlugin)
             .add_plugin(EnemyPlugin)
+            .add_plugin(FPSCounterPlugin)
             .add_system(bevy::input::system::exit_on_esc_system.system());
 
         #[cfg(debug_assertions)]
