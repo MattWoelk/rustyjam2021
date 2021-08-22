@@ -40,7 +40,8 @@ impl Plugin for GamePlugin {
             .add_plugin(ActionsPlugin)
             .add_plugin(InternalAudioPlugin)
             .add_plugin(PlayerPlugin)
-            .add_plugin(EnemyPlugin);
+            .add_plugin(EnemyPlugin)
+            .add_system(bevy::input::system::exit_on_esc_system.system());
 
         #[cfg(debug_assertions)]
         {
