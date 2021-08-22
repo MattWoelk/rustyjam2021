@@ -19,7 +19,8 @@ impl Plugin for FPSCounterPlugin {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // UI camera
-    commands.spawn_bundle(UiCameraBundle::default());
+    commands.spawn_bundle(UiCameraBundle::default()); // TODO: Should this be somewhere else?
+
     // Text with one section
     commands
         .spawn_bundle(TextBundle {
@@ -35,16 +36,13 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 max_size: Size::new(Val::Px(910.), Val::Px(515.)),
                 ..Default::default()
             },
-            // Use the `Text::with_section` constructor
             text: Text::with_section(
-                // Accepts a `String` or any type that converts into a `String`, such as `&str`
                 "This is example text at the bottom of the screen. Two whole complete sentences worth! Wowzers! This is example text at the bottom of the screen. Two whole complete sentences worth! Wowzers! This is example text at the bottom of the screen. Two whole complete sentences worth! Wowzers!",
                 TextStyle {
-                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                    font: asset_server.load("fonts/ShareTechMono-Regular.ttf"),
                     font_size: 25.0,
                     color: Color::WHITE,
                 },
-                // Note: You can use `Default::default()` in place of the `TextAlignment`
                 TextAlignment {
                     horizontal: HorizontalAlign::Center,
                     ..Default::default()
@@ -53,6 +51,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(ColorText);
+
     // Rich text with multiple sections
     commands
         .spawn_bundle(TextBundle {
