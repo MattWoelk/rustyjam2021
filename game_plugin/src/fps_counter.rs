@@ -27,16 +27,17 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 align_self: AlignSelf::FlexEnd,
                 position_type: PositionType::Absolute,
                 position: Rect {
-                    bottom: Val::Px(5.0),
-                    right: Val::Px(15.0),
+                    bottom: Val::Px(215.0),
+                    right: Val::Px(215.0),
                     ..Default::default()
                 },
+                max_size: Size::new(Val::Px(215.), Val::Px(215.)),
                 ..Default::default()
             },
             // Use the `Text::with_section` constructor
             text: Text::with_section(
                 // Accepts a `String` or any type that converts into a `String`, such as `&str`
-                "hello\nbevy!",
+                "hello\nbevy this is a long line",
                 TextStyle {
                     font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                     font_size: 100.0,
