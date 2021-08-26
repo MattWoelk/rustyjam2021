@@ -8,7 +8,9 @@ pub struct ActionsPlugin;
 impl Plugin for ActionsPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.init_resource::<Actions>().add_system_set(
-            SystemSet::on_update(GameState::Playing).with_system(set_movement_actions.system()),
+            SystemSet::on_update(GameState::Playing)
+                .with_system(set_movement_actions.system())
+                .with_system(set_shoot_actions.system()),
         );
     }
 }
@@ -16,6 +18,7 @@ impl Plugin for ActionsPlugin {
 #[derive(Default)]
 pub struct Actions {
     pub player_movement: Option<Vec2>,
+    pub player_shoot: bool,
 }
 
 fn set_movement_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<KeyCode>>) {
@@ -139,5 +142,13 @@ impl GameControl {
                     || keyboard_input.just_pressed(KeyCode::Right)
             }
         }
+    }
+}
+
+fn set_shoot_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<KeyCode>>) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        actions.player_shoot = true;
+    } else {
+        actions.player_shoot = false;
     }
 }

@@ -6,6 +6,7 @@ use bevy::prelude::*;
 pub struct PlayerPlugin;
 
 pub struct Player;
+pub struct Laser;
 
 /// This plugin handles player related stuff like movement
 /// Player logic is only active during the State `GameState::Playing`
@@ -16,7 +17,12 @@ impl Plugin for PlayerPlugin {
                 .with_system(spawn_player.system())
                 .with_system(spawn_camera.system()),
         )
-        .add_system_set(SystemSet::on_update(GameState::Playing).with_system(move_player.system()));
+        .add_system_set(
+            SystemSet::on_update(GameState::Playing)
+                .with_system(move_player.system())
+                .with_system(shoot_bullet.system())
+                .with_system(laser_movement.system()),
+        );
     }
 }
 
@@ -60,5 +66,41 @@ fn move_player(
     );
     for mut player_transform in player_query.iter_mut() {
         player_transform.translation += movement;
+    }
+}
+
+fn shoot_bullet(
+    mut commands: Commands,
+    actions: Res<Actions>,
+    textures: Res<TextureAssets>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut query: Query<(&Transform, With<Player>)>,
+) {
+    if actions.player_shoot {
+        let texture_handle = textures.texture_tileset.clone().into();
+        let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
+        let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+        for (transform, _) in query.iter_mut() {
+            commands
+                .spawn()
+                .insert_bundle(SpriteSheetBundle {
+                    texture_atlas: texture_atlas_handle.clone(),
+                    transform: transform.clone(), // Transform::from_translation(Vec3::new(0., 0., 1.)),
+                    sprite: TextureAtlasSprite::new(188),
+                    ..Default::default()
+                })
+                .insert(Laser);
+        }
+    }
+}
+
+fn laser_movement(mut commands: Commands, mut query: Query<(Entity, &mut Transform, With<Laser>)>) {
+    for (entity, mut transform, _) in query.iter_mut() {
+        transform.translation += Vec3::new(0., 4., 0.);
+
+        if transform.translation.y > 280. {
+            commands.entity(entity).despawn();
+        }
     }
 }
