@@ -97,7 +97,7 @@ fn shoot_bullet(
                     .insert_bundle(SpriteSheetBundle {
                         texture_atlas: texture_atlas_handle.clone(),
                         transform: transform.clone(),
-                        sprite: TextureAtlasSprite::new(188),
+                        sprite: TextureAtlasSprite::new(188 - 24),
                         ..Default::default()
                     })
                     .insert(Laser { direction: a });
