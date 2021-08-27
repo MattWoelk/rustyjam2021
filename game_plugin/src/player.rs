@@ -1,5 +1,4 @@
 use crate::actions::Actions;
-use crate::loading::TextureAssets;
 use crate::loading::TextureAtlases;
 use crate::GameState;
 use bevy::prelude::*;
@@ -80,8 +79,7 @@ fn shoot(
     mut commands: Commands,
     time: Res<Time>,
     actions: Res<Actions>,
-    textures: Res<TextureAssets>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    texture_atlases: ResMut<TextureAtlases>,
     mut query: Query<(&Transform, &mut Player)>,
 ) {
     let shot_delay = 0.2f32;
@@ -91,9 +89,7 @@ fn shoot(
     }
 
     if actions.player_shoot {
-        let texture_handle = textures.texture_tileset.clone().into();
-        let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
-        let texture_atlas_handle = texture_atlases.add(texture_atlas);
+        let texture_atlas_handle = &texture_atlases.main_sprite_sheet;
 
         for (transform, mut player) in query.iter_mut() {
             if player.shot_timer > 0. {
