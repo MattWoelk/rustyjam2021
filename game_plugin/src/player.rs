@@ -8,11 +8,18 @@ pub struct PlayerPlugin;
 #[derive(Default)]
 pub struct Player {
     pub shot_timer: f32,
+    pub state: PlayerState,
 }
 
-enum PlayerState {
+pub enum PlayerState {
     ShootingBullets,
     ShootingLaser,
+}
+
+impl Default for PlayerState {
+    fn default() -> Self {
+        Self::ShootingBullets
+    }
 }
 
 #[derive(Default)]
@@ -92,39 +99,56 @@ fn shoot(
         let texture_atlas_handle = &texture_atlases.main_sprite_sheet;
 
         for (transform, mut player) in query.iter_mut() {
-            if player.shot_timer > 0. {
-                while player.shot_timer > 0. {
-                    player.shot_timer -= shot_delay;
-                }
-            } else {
-                continue;
-            }
-
-            let bullet_spread_directions = [
-                Vec3::new(0.5, 0.5, 0.),
-                Vec3::new(0.0, 1., 0.),
-                Vec3::new(-0.5, 0.5, 0.),
-            ];
-            for a in bullet_spread_directions {
-                commands
-                    .spawn()
-                    .insert_bundle(SpriteSheetBundle {
-                        texture_atlas: texture_atlas_handle.clone(),
-                        transform: transform.clone(),
-                        sprite: TextureAtlasSprite::new(188 - 24),
-                        ..Default::default()
-                    })
-                    .insert(Laser { direction: a });
+            match player.state {
+                PlayerState::ShootingBullets => shoot_bullet_spray(
+                    &mut player,
+                    transform,
+                    &mut commands,
+                    shot_delay,
+                    texture_atlas_handle,
+                ),
+                PlayerState::ShootingLaser => todo!(),
             }
         }
     }
 }
 
-fn shoot_bullet_spray() {}
+fn shoot_bullet_spray(
+    player: &mut Player,
+    transform: &Transform,
+    commands: &mut Commands,
+    shot_delay: f32,
+    texture_atlas_handle: &Handle<TextureAtlas>,
+) {
+    if player.shot_timer > 0. {
+        while player.shot_timer > 0. {
+            player.shot_timer -= shot_delay;
+        }
+    } else {
+        return;
+    }
+
+    let bullet_spread_directions = [
+        Vec3::new(0.5, 0.5, 0.).normalize(),
+        Vec3::new(0.0, 1., 0.).normalize(),
+        Vec3::new(-0.5, 0.5, 0.).normalize(),
+    ];
+    for a in bullet_spread_directions {
+        commands
+            .spawn()
+            .insert_bundle(SpriteSheetBundle {
+                texture_atlas: texture_atlas_handle.clone(),
+                transform: transform.clone(),
+                sprite: TextureAtlasSprite::new(188 - 24),
+                ..Default::default()
+            })
+            .insert(Laser { direction: a });
+    }
+}
 
 fn laser_movement(mut commands: Commands, mut query: Query<(Entity, &mut Transform, &Laser)>) {
     for (entity, mut transform, laser) in query.iter_mut() {
-        transform.translation += laser.direction * 8.; // Vec3::new(0., 4., 0.);
+        transform.translation += laser.direction * 16.;
 
         if transform.translation.y > 280. {
             commands.entity(entity).despawn();
