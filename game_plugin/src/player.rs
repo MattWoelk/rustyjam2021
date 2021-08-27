@@ -5,7 +5,10 @@ use bevy::prelude::*;
 
 pub struct PlayerPlugin;
 
-pub struct Player;
+#[derive(Default)]
+pub struct Player {
+    pub shot_timer: f32,
+}
 
 #[derive(Default)]
 pub struct Laser {
@@ -51,7 +54,7 @@ fn spawn_player(
             sprite: TextureAtlasSprite::new(188),
             ..Default::default()
         })
-        .insert(Player);
+        .insert(Player::default());
 }
 
 fn move_player(
@@ -75,17 +78,32 @@ fn move_player(
 
 fn shoot_bullet(
     mut commands: Commands,
+    time: Res<Time>,
     actions: Res<Actions>,
     textures: Res<TextureAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-    mut query: Query<(&Transform, With<Player>)>,
+    mut query: Query<(&Transform, &mut Player)>,
 ) {
+    let shot_delay = 0.2f32;
+
+    for (_, mut player) in query.iter_mut() {
+        player.shot_timer += time.delta().as_secs_f32();
+    }
+
     if actions.player_shoot {
         let texture_handle = textures.texture_tileset.clone().into();
         let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
         let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
-        for (transform, _) in query.iter_mut() {
+        for (transform, mut player) in query.iter_mut() {
+            if player.shot_timer > 0. {
+                while player.shot_timer > 0. {
+                    player.shot_timer -= shot_delay;
+                }
+            } else {
+                continue;
+            }
+
             let bullet_spread_directions = [
                 Vec3::new(0.5, 0.5, 0.),
                 Vec3::new(0.0, 1., 0.),

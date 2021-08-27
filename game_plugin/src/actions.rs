@@ -146,7 +146,7 @@ impl GameControl {
 }
 
 fn set_shoot_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<KeyCode>>) {
-    if keyboard_input.just_pressed(KeyCode::Space) {
+    if keyboard_input.pressed(KeyCode::Space) {
         actions.player_shoot = true;
     } else {
         actions.player_shoot = false;
