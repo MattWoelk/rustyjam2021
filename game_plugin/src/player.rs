@@ -1,5 +1,6 @@
 use crate::actions::Actions;
 use crate::loading::TextureAssets;
+use crate::loading::TextureAtlases;
 use crate::GameState;
 use bevy::prelude::*;
 
@@ -8,6 +9,11 @@ pub struct PlayerPlugin;
 #[derive(Default)]
 pub struct Player {
     pub shot_timer: f32,
+}
+
+enum PlayerState {
+    ShootingBullets,
+    ShootingLaser,
 }
 
 #[derive(Default)]
@@ -27,7 +33,7 @@ impl Plugin for PlayerPlugin {
         .add_system_set(
             SystemSet::on_update(GameState::Playing)
                 .with_system(move_player.system())
-                .with_system(shoot_bullet.system())
+                .with_system(shoot.system())
                 .with_system(laser_movement.system()),
         );
     }
@@ -37,14 +43,8 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }
 
-fn spawn_player(
-    mut commands: Commands,
-    textures: Res<TextureAssets>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-) {
-    let texture_handle = textures.texture_tileset.clone().into();
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+fn spawn_player(mut commands: Commands, texture_atlases: Res<TextureAtlases>) {
+    let texture_atlas_handle = &texture_atlases.main_sprite_sheet;
 
     // Spawn Player
     commands
@@ -76,7 +76,7 @@ fn move_player(
     }
 }
 
-fn shoot_bullet(
+fn shoot(
     mut commands: Commands,
     time: Res<Time>,
     actions: Res<Actions>,
@@ -123,6 +123,8 @@ fn shoot_bullet(
         }
     }
 }
+
+fn shoot_bullet_spray() {}
 
 fn laser_movement(mut commands: Commands, mut query: Query<(Entity, &mut Transform, &Laser)>) {
     for (entity, mut transform, laser) in query.iter_mut() {
