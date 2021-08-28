@@ -9,8 +9,9 @@ impl Plugin for ActionsPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.init_resource::<Actions>().add_system_set(
             SystemSet::on_update(GameState::Playing)
-                .with_system(set_movement_actions.system())
-                .with_system(set_shoot_actions.system()),
+                .label("gather_input")
+                .with_system(set_movement_actions.system().label("gather_input"))
+                .with_system(set_shoot_actions.system().label("gather_input")),
         );
     }
 }
@@ -148,8 +149,6 @@ impl GameControl {
 
 fn set_shoot_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<KeyCode>>) {
     actions.player_shoot = keyboard_input.pressed(KeyCode::Space);
-    //actions.player_switch_weapon = keyboard_input.just_pressed(KeyCode::LShift)
-    //    || keyboard_input.just_pressed(KeyCode::RShift);
-    actions.player_switch_weapon = keyboard_input.just_pressed(KeyCode::F)
-    // TODO: this is rapidly switching. Weird... ... actually it seems worse than that.
+    actions.player_switch_weapon = keyboard_input.just_pressed(KeyCode::LShift)
+        || keyboard_input.just_pressed(KeyCode::RShift);
 }

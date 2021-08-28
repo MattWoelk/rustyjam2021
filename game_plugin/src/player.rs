@@ -41,10 +41,10 @@ impl Plugin for PlayerPlugin {
         )
         .add_system_set(
             SystemSet::on_update(GameState::Playing)
-                .with_system(move_player.system())
-                .with_system(shoot.system())
-                .with_system(bullet_movement.system())
-                .with_system(laser_movement.system()),
+                .with_system(move_player.system().after("gather_input"))
+                .with_system(shoot.system().after("gather_input"))
+                .with_system(bullet_movement.system().after("gather_input"))
+                .with_system(laser_movement.system().after("gather_input")),
         );
     }
 }
@@ -70,6 +70,7 @@ fn spawn_player(mut commands: Commands, texture_atlases: Res<TextureAtlases>) {
                 .spawn()
                 .insert(Transform::default())
                 .insert(GlobalTransform::default())
+                .insert(Visible::default())
                 .insert(Laser)
                 .with_children(|laser_parent| {
                     laser_parent.spawn_bundle(SpriteSheetBundle {
@@ -110,25 +111,28 @@ fn shoot(
     time: Res<Time>,
     actions: Res<Actions>,
     texture_atlases: ResMut<TextureAtlases>,
-    mut query: Query<(&Transform, &mut Player)>,
+    //mut query: Query<(&Transform, &mut Player)>,
+    mut query: Query<(&Transform, &mut Player, &Children)>,
+    mut q_laser: Query<(&mut Laser, &Children)>,
+    mut q_laser_sprite: Query<&mut Visible>,
 ) {
     let shot_delay = 0.2f32;
 
-    for (_, mut player) in query.iter_mut() {
+    for (_, mut player, _) in query.iter_mut() {
         player.shot_timer += time.delta().as_secs_f32();
+
+        if actions.player_switch_weapon {
+            player.state = match player.state {
+                PlayerState::ShootingBullets => PlayerState::ShootingLaser,
+                PlayerState::ShootingLaser => PlayerState::ShootingBullets,
+            }
+        }
     }
 
     if actions.player_shoot {
         let texture_atlas_handle = &texture_atlases.main_sprite_sheet;
 
-        for (transform, mut player) in query.iter_mut() {
-            if actions.player_switch_weapon {
-                player.state = match player.state {
-                    PlayerState::ShootingBullets => PlayerState::ShootingLaser,
-                    PlayerState::ShootingLaser => PlayerState::ShootingBullets,
-                }
-            }
-
+        for (transform, mut player, children) in query.iter_mut() {
             match player.state {
                 PlayerState::ShootingBullets => shoot_bullet_spray(
                     &mut player,
@@ -139,9 +143,16 @@ fn shoot(
                 ), // TODO: also, delete/hide the laser ... maybe in a different system
                 PlayerState::ShootingLaser => {
                     dbg!("lasors!");
+                    for &child in children.iter() {
+                        let (mut laser, mut children) = q_laser.get_mut(child).unwrap();
+                        for &child in children.iter() {
+                            let mut visible = q_laser_sprite.get_mut(child).unwrap();
+                            visible.is_visible = false;
+                        }
+                    }
 
                     // TODO: if there is no laser, make one (should this be elsewhere, and just have it hidden?)
-                    // TODO: keep the laser in front of the ship (just parent it to the ship)
+                    // TODO: try holding the Visible handle on the laser, so I don't have to do this hierarchy stuff
                 }
             }
         }
@@ -199,7 +210,6 @@ fn laser_movement(
         for &child in children.iter() {
             let (mut laser, mut transform) = q_laser.get_mut(child).unwrap();
             transform.rotate(Quat::from_rotation_z(0.01));
-            dbg!(&player.state);
         }
     }
 }
