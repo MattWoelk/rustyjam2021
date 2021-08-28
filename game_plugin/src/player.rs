@@ -11,6 +11,7 @@ pub struct Player {
     pub state: PlayerState,
 }
 
+#[derive(Debug)]
 pub enum PlayerState {
     ShootingBullets,
     ShootingLaser,
@@ -23,9 +24,11 @@ impl Default for PlayerState {
 }
 
 #[derive(Default)]
-pub struct Laser {
+pub struct Bullet {
     pub direction: Vec3,
 }
+
+pub struct Laser;
 
 /// This plugin handles player related stuff like movement
 /// Player logic is only active during the State `GameState::Playing`
@@ -40,6 +43,7 @@ impl Plugin for PlayerPlugin {
             SystemSet::on_update(GameState::Playing)
                 .with_system(move_player.system())
                 .with_system(shoot.system())
+                .with_system(bullet_movement.system())
                 .with_system(laser_movement.system()),
         );
     }
@@ -60,7 +64,26 @@ fn spawn_player(mut commands: Commands, texture_atlases: Res<TextureAtlases>) {
             sprite: TextureAtlasSprite::new(188),
             ..Default::default()
         })
-        .insert(Player::default());
+        .insert(Player::default())
+        .with_children(|parent| {
+            parent
+                .spawn()
+                .insert(Transform::default())
+                .insert(GlobalTransform::default())
+                .insert(Laser)
+                .with_children(|laser_parent| {
+                    laser_parent.spawn_bundle(SpriteSheetBundle {
+                        texture_atlas: texture_atlas_handle.clone(),
+                        transform: Transform {
+                            translation: Vec3::new(0., 100., 0.),
+                            rotation: Default::default(),
+                            scale: Vec3::new(1., 10., 1.),
+                        },
+                        sprite: TextureAtlasSprite::new(189),
+                        ..Default::default()
+                    });
+                });
+        });
 }
 
 fn move_player(
@@ -99,6 +122,13 @@ fn shoot(
         let texture_atlas_handle = &texture_atlases.main_sprite_sheet;
 
         for (transform, mut player) in query.iter_mut() {
+            if actions.player_switch_weapon {
+                player.state = match player.state {
+                    PlayerState::ShootingBullets => PlayerState::ShootingLaser,
+                    PlayerState::ShootingLaser => PlayerState::ShootingBullets,
+                }
+            }
+
             match player.state {
                 PlayerState::ShootingBullets => shoot_bullet_spray(
                     &mut player,
@@ -106,8 +136,13 @@ fn shoot(
                     &mut commands,
                     shot_delay,
                     texture_atlas_handle,
-                ),
-                PlayerState::ShootingLaser => todo!(),
+                ), // TODO: also, delete/hide the laser ... maybe in a different system
+                PlayerState::ShootingLaser => {
+                    dbg!("lasors!");
+
+                    // TODO: if there is no laser, make one (should this be elsewhere, and just have it hidden?)
+                    // TODO: keep the laser in front of the ship (just parent it to the ship)
+                }
             }
         }
     }
@@ -133,7 +168,7 @@ fn shoot_bullet_spray(
         Vec3::new(0.0, 1., 0.).normalize(),
         Vec3::new(-0.5, 0.5, 0.).normalize(),
     ];
-    for a in bullet_spread_directions {
+    for dir in bullet_spread_directions {
         commands
             .spawn()
             .insert_bundle(SpriteSheetBundle {
@@ -142,16 +177,29 @@ fn shoot_bullet_spray(
                 sprite: TextureAtlasSprite::new(188 - 24),
                 ..Default::default()
             })
-            .insert(Laser { direction: a });
+            .insert(Bullet { direction: dir });
     }
 }
 
-fn laser_movement(mut commands: Commands, mut query: Query<(Entity, &mut Transform, &Laser)>) {
-    for (entity, mut transform, laser) in query.iter_mut() {
-        transform.translation += laser.direction * 16.;
+fn bullet_movement(mut commands: Commands, mut query: Query<(Entity, &mut Transform, &Bullet)>) {
+    for (entity, mut transform, bullet) in query.iter_mut() {
+        transform.translation += bullet.direction * 16.;
 
         if transform.translation.y > 280. {
             commands.entity(entity).despawn();
+        }
+    }
+}
+
+fn laser_movement(
+    mut q_player: Query<(&Player, &Children)>,
+    mut q_laser: Query<(&mut Laser, &mut Transform)>,
+) {
+    for (player, children) in q_player.iter_mut() {
+        for &child in children.iter() {
+            let (mut laser, mut transform) = q_laser.get_mut(child).unwrap();
+            transform.rotate(Quat::from_rotation_z(0.01));
+            dbg!(&player.state);
         }
     }
 }

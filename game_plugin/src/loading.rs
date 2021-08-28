@@ -42,7 +42,6 @@ pub struct TextureAssets {
     pub texture_tileset: Handle<Texture>,
 }
 
-//#[derive(Default)]
 pub struct TextureAtlases {
     pub main_sprite_sheet: Handle<TextureAtlas>,
 }

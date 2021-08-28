@@ -19,6 +19,7 @@ impl Plugin for ActionsPlugin {
 pub struct Actions {
     pub player_movement: Option<Vec2>,
     pub player_shoot: bool,
+    pub player_switch_weapon: bool,
 }
 
 fn set_movement_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<KeyCode>>) {
@@ -146,9 +147,9 @@ impl GameControl {
 }
 
 fn set_shoot_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<KeyCode>>) {
-    if keyboard_input.pressed(KeyCode::Space) {
-        actions.player_shoot = true;
-    } else {
-        actions.player_shoot = false;
-    }
+    actions.player_shoot = keyboard_input.pressed(KeyCode::Space);
+    //actions.player_switch_weapon = keyboard_input.just_pressed(KeyCode::LShift)
+    //    || keyboard_input.just_pressed(KeyCode::RShift);
+    actions.player_switch_weapon = keyboard_input.just_pressed(KeyCode::F)
+    // TODO: this is rapidly switching. Weird... ... actually it seems worse than that.
 }
