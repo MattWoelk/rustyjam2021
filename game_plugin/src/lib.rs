@@ -4,6 +4,7 @@ mod enemy;
 mod fps_counter;
 mod loading;
 mod menu;
+mod overlap;
 mod player;
 mod seconds_timer;
 
