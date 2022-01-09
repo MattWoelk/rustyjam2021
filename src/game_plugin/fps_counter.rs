@@ -29,7 +29,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(TextBundle {
             style: Style {
-                align_self: AlignSelf::FlexEnd,
+                align_self: AlignSelf::FlexStart,
                 position_type: PositionType::Absolute,
                 position: Rect {
                     left: Val::Px(25.),
@@ -102,20 +102,19 @@ fn text_update_system(
     key_actions: ResMut<KeyActions>,
     mut query: Query<&mut Text, With<FpsText>>,
 ) {
-    //for mut text in query.iter_mut() {
-    //    if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
-    //        if let Some(average) = fps.average() {
-    //            // Update the value of the second section
-    //            text.sections[1].value = format!("{:.2}", average);
-    //        }
-    //    }
-    //}
     for mut text in query.iter_mut() {
-        let word: String = key_actions.char_stack.iter().collect();
+        let stack = key_actions.char_stack.clone();
+        let split_index = if let Some(word) = &key_actions.longest_word_option {
+            stack.len() - word.len() // TODO: if this line errors, it's probably because the system was run in the wrong order. We need labels...
+        } else {
+            stack.len()
+        };
+
         //if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
         //if let Some(average) = fps.average() {
         // Update the value of the second section
-        text.sections[1].value = format!("{}", word);
+        text.sections[0].value = format!("{}", stack[0..split_index].iter().collect::<String>());
+        text.sections[1].value = format!("{}", stack[split_index..].iter().collect::<String>());
         //}
         //}
     }

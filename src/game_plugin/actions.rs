@@ -36,6 +36,7 @@ pub struct KeyActions {
     pub keys_just_pressed: Vec<char>,
     pub space_pressed: bool,
     pub all_words: HashSet<String>,
+    pub longest_word_option: Option<String>,
 }
 
 impl Default for KeyActions {
@@ -51,6 +52,7 @@ impl Default for KeyActions {
             keys_just_pressed: vec![],
             space_pressed: false,
             all_words,
+            longest_word_option: None,
         }
     }
 }
@@ -226,4 +228,35 @@ fn set_keyboard_actions(mut action: ResMut<KeyActions>, keyboard_input: Res<Inpu
     action.new_press = new_chars.len() > 0;
     action.keys_just_pressed = new_chars;
     action.space_pressed = keyboard_input.just_pressed(KeyCode::Space);
+
+    //if action.new_press || action.space_pressed {
+    action.longest_word_option = find_ending_word(
+        &action.char_stack.iter().collect::<String>(),
+        &action.all_words,
+    );
+    //}
+}
+
+fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<String> {
+    //let now = Instant::now();
+
+    if text.len() < 3 {
+        return None;
+    }
+
+    // TODO: is there a fast way to do this? Maybe if the word lists were split into lengths, and sorted? Or put in a set each?
+    // TODO: actually, maybe this is fast enough now (0.3ms for 15 letters with no matches)
+    // TODO: that was in debug. In release it should be even faster. :)
+    for length in (3..=text.len()).rev() {
+        let substring: String = text.chars().skip(text.len() - length).collect();
+
+        if all_words.contains(&substring) {
+            //dbg!(now.elapsed());
+            //dbg!(&substring);
+            return Some(substring);
+        }
+    }
+
+    //dbg!(now.elapsed());
+    None
 }
