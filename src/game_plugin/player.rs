@@ -4,6 +4,7 @@ use crate::game_plugin::loading::TextureAtlases;
 use crate::game_plugin::GameState;
 use bevy::prelude::*;
 use std::collections::HashSet;
+use std::time::Instant;
 
 pub struct PlayerPlugin;
 
@@ -103,7 +104,10 @@ fn shoot_enemies_with_keypresses(key_actions: ResMut<KeyActions>, mut enemies: Q
 
     let stack = key_actions.char_stack.iter().collect::<String>();
 
-    dbg!(&stack, find_ending_word(&stack, &key_actions.all_words));
+    // TODO: should this be its own system? Probably.
+    if key_actions.new_press {
+        dbg!(&stack, find_ending_word(&stack, &key_actions.all_words));
+    }
 
     // TODO: see if we spelt a word, and make a thing happen in that case? but that won't all happen in the same frame, so we need to keep track ...
     //       and we'll need to show on screen what was typed and in what order, so people can see if there's a word there.
@@ -113,28 +117,25 @@ fn shoot_enemies_with_keypresses(key_actions: ResMut<KeyActions>, mut enemies: Q
 }
 
 fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<usize> {
+    //let now = Instant::now();
+
     if text.len() < 3 {
         return None;
     }
 
     // TODO: is there a fast way to do this? Maybe if the word lists were split into lengths, and sorted? Or put in a set each?
+    // TODO: actually, maybe this is fast enough now (0.3ms for 15 letters with no matches)
     for length in (3..=text.len()).rev() {
-        let substring = text
-            .chars()
-            .rev()
-            .take(length)
-            .collect::<String>()
-            .chars()
-            .rev()
-            .collect::<String>();
-
-        dbg!(&substring);
+        let substring: String = text.chars().skip(text.len() - length).collect();
 
         if all_words.contains(&substring) {
+            //dbg!(now.elapsed());
+            //dbg!(&substring);
             return Some(length);
         }
     }
 
+    //dbg!(now.elapsed());
     None
 }
 
