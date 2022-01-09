@@ -92,7 +92,10 @@ fn spawn_player(mut commands: Commands, texture_atlases: Res<TextureAtlases>) {
         });
 }
 
-fn shoot_enemies_with_keypresses(key_actions: ResMut<KeyActions>, mut enemies: Query<&mut Enemy>) {
+fn shoot_enemies_with_keypresses(
+    mut key_actions: ResMut<KeyActions>,
+    mut enemies: Query<&mut Enemy>,
+) {
     let keys_pressed = key_actions.keys_just_pressed.clone();
     // TODO: this should be a set
 
@@ -106,7 +109,14 @@ fn shoot_enemies_with_keypresses(key_actions: ResMut<KeyActions>, mut enemies: Q
 
     // TODO: should this be its own system? Probably.
     if key_actions.new_press {
-        dbg!(&stack, find_ending_word(&stack, &key_actions.all_words));
+        if let Some(number_of_letters) = find_ending_word(&stack, &key_actions.all_words) {
+            dbg!(number_of_letters);
+            let stack_len = key_actions.char_stack.len();
+            key_actions
+                .char_stack
+                .truncate(stack_len - number_of_letters);
+            dbg!(key_actions.char_stack.iter().collect::<String>());
+        }
     }
 
     // TODO: see if we spelt a word, and make a thing happen in that case? but that won't all happen in the same frame, so we need to keep track ...
@@ -125,6 +135,7 @@ fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<usize> {
 
     // TODO: is there a fast way to do this? Maybe if the word lists were split into lengths, and sorted? Or put in a set each?
     // TODO: actually, maybe this is fast enough now (0.3ms for 15 letters with no matches)
+    // TODO: that was in debug. In release it should be even faster. :)
     for length in (3..=text.len()).rev() {
         let substring: String = text.chars().skip(text.len() - length).collect();
 
