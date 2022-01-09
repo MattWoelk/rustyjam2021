@@ -1,9 +1,6 @@
-use crate::enemy::Enemy;
-use crate::player::Player;
-use bevy::{
-    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
-    prelude::*,
-};
+use crate::game_plugin::enemy::Enemy;
+use crate::game_plugin::player::Player;
+use bevy::prelude::*;
 
 fn collision_check_system(
     mut query_player: Query<(&Player, &Transform)>,

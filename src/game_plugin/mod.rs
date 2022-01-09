@@ -8,16 +8,15 @@ mod overlap;
 mod player;
 mod seconds_timer;
 
-use crate::actions::ActionsPlugin;
-use crate::audio::InternalAudioPlugin;
-use crate::enemy::EnemyPlugin;
-use crate::loading::LoadingPlugin;
-use crate::menu::MenuPlugin;
-use crate::player::PlayerPlugin;
-
-use crate::fps_counter::FPSCounterPlugin;
-use crate::seconds_timer::SecondsTimerPlugin;
-use bevy::app::AppBuilder;
+use crate::game_plugin::actions::ActionsPlugin;
+use crate::game_plugin::audio::InternalAudioPlugin;
+use crate::game_plugin::enemy::EnemyPlugin;
+use crate::game_plugin::fps_counter::FPSCounterPlugin;
+use crate::game_plugin::loading::LoadingPlugin;
+use crate::game_plugin::menu::MenuPlugin;
+use crate::game_plugin::player::PlayerPlugin;
+use crate::game_plugin::seconds_timer::SecondsTimerPlugin;
+use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
@@ -38,7 +37,7 @@ enum GameState {
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_state(GameState::Loading)
             .add_plugin(LoadingPlugin)
             .add_plugin(MenuPlugin)
@@ -48,7 +47,7 @@ impl Plugin for GamePlugin {
             .add_plugin(EnemyPlugin)
             .add_plugin(FPSCounterPlugin)
             .add_plugin(SecondsTimerPlugin)
-            .add_system(bevy::input::system::exit_on_esc_system.system());
+            .add_system(bevy::input::system::exit_on_esc_system);
 
         #[cfg(debug_assertions)]
         {

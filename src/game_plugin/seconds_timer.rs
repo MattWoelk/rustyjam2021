@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 
 pub struct SecondsTimerPlugin;
+
+#[derive(Component)]
 struct SecondsTimer;
 
 impl Plugin for SecondsTimerPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(spawn_timer.system())
-            .add_system(update_timer.system());
+    fn build(&self, app: &mut App) {
+        app.add_startup_system(spawn_timer).add_system(update_timer);
     }
 }
 

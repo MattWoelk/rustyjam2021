@@ -1,17 +1,17 @@
-use crate::actions::Actions;
-use crate::loading::TextureAtlases;
-use crate::GameState;
+use crate::game_plugin::actions::Actions;
+use crate::game_plugin::loading::TextureAtlases;
+use crate::game_plugin::GameState;
 use bevy::prelude::*;
 
 pub struct PlayerPlugin;
 
-#[derive(Default)]
+#[derive(Default, Component)]
 pub struct Player {
     pub shot_timer: f32,
     pub state: PlayerState,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 pub enum PlayerState {
     ShootingBullets,
     ShootingLaser,
@@ -23,28 +23,29 @@ impl Default for PlayerState {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Component)]
 pub struct Bullet {
     pub direction: Vec3,
 }
 
+#[derive(Component)]
 pub struct Laser;
 
 /// This plugin handles player related stuff like movement
 /// Player logic is only active during the State `GameState::Playing`
 impl Plugin for PlayerPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_system_set(
             SystemSet::on_enter(GameState::Playing)
-                .with_system(spawn_player.system())
-                .with_system(spawn_camera.system()),
+                .with_system(spawn_player)
+                .with_system(spawn_camera),
         )
         .add_system_set(
             SystemSet::on_update(GameState::Playing)
-                .with_system(move_player.system().after("gather_input"))
-                .with_system(shoot.system().after("gather_input"))
-                .with_system(bullet_movement.system().after("gather_input"))
-                .with_system(laser_movement.system().after("gather_input")),
+                .with_system(move_player.after("gather_input"))
+                .with_system(shoot.after("gather_input"))
+                .with_system(bullet_movement.after("gather_input"))
+                .with_system(laser_movement.after("gather_input")),
         );
     }
 }
@@ -70,7 +71,7 @@ fn spawn_player(mut commands: Commands, texture_atlases: Res<TextureAtlases>) {
                 .spawn()
                 .insert(Transform::default())
                 .insert(GlobalTransform::default())
-                .insert(Visible::default())
+                //.insert(Visible::default())
                 .insert(Laser)
                 .with_children(|laser_parent| {
                     laser_parent.spawn_bundle(SpriteSheetBundle {
@@ -114,7 +115,7 @@ fn shoot(
     //mut query: Query<(&Transform, &mut Player)>,
     mut query: Query<(&Transform, &mut Player, &Children)>,
     mut q_laser: Query<(&mut Laser, &Children)>,
-    mut q_laser_sprite: Query<&mut Visible>,
+    //mut q_laser_sprite: Query<&mut Visible>,
 ) {
     let shot_delay = 0.2f32;
 
@@ -146,8 +147,8 @@ fn shoot(
                     for &child in children.iter() {
                         let (mut laser, mut children) = q_laser.get_mut(child).unwrap();
                         for &child in children.iter() {
-                            let mut visible = q_laser_sprite.get_mut(child).unwrap();
-                            visible.is_visible = false;
+                            //let mut visible = q_laser_sprite.get_mut(child).unwrap();
+                            //visible.is_visible = false;
                         }
                     }
 

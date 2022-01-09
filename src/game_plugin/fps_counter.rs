@@ -5,15 +5,18 @@ use bevy::{
 
 pub struct FPSCounterPlugin;
 
+#[derive(Component)]
 struct FpsText;
+
+#[derive(Component)]
 struct ColorText;
 
 impl Plugin for FPSCounterPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_plugin(FrameTimeDiagnosticsPlugin::default())
-            .add_startup_system(setup.system())
-            .add_system(text_update_system.system())
-            .add_system(text_color_system.system());
+            .add_startup_system(setup)
+            .add_system(text_update_system)
+            .add_system(text_color_system);
     }
 }
 

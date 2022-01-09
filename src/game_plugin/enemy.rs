@@ -1,17 +1,16 @@
-use crate::loading::TextureAssets;
-use crate::GameState;
+use crate::game_plugin::loading::TextureAssets;
+use crate::game_plugin::GameState;
 use bevy::prelude::*;
 
 pub struct EnemyPlugin;
+
+#[derive(Component)]
 pub struct Enemy;
 
 impl Plugin for EnemyPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_system_set(
-            SystemSet::on_enter(GameState::Playing)
-                .with_system(spawn_enemy.system())
-        )
-        .add_system_set(SystemSet::on_update(GameState::Playing).with_system(move_enemy.system()));
+    fn build(&self, app: &mut App) {
+        app.add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_enemy))
+            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(move_enemy));
     }
 }
 
@@ -24,7 +23,8 @@ fn spawn_enemy(
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
-    commands.spawn()
+    commands
+        .spawn()
         .insert_bundle(SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
             transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
@@ -45,12 +45,16 @@ fn move_enemy(
     }
 
     // rapidly swap its texture, like it's an animation or something.
-    let anim_sprite_sheet_indices: [u32; 2] = [189, (189-24)];
+    let anim_sprite_sheet_indices: [usize; 2] = [189, (189 - 24)];
     for (mut timer, mut sprite) in sprite_query.iter_mut() {
         timer.tick(time.delta());
         if timer.finished() {
-            let current_index = anim_sprite_sheet_indices.iter().position(|&x| x == sprite.index).unwrap();
-            sprite.index = anim_sprite_sheet_indices[(current_index + 1) % anim_sprite_sheet_indices.len()];
+            let current_index = anim_sprite_sheet_indices
+                .iter()
+                .position(|&x| x == sprite.index)
+                .unwrap();
+            sprite.index =
+                anim_sprite_sheet_indices[(current_index + 1) % anim_sprite_sheet_indices.len()];
         }
     }
 }

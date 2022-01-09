@@ -1,6 +1,6 @@
-use crate::actions::Actions;
-use crate::loading::AudioAssets;
-use crate::GameState;
+use crate::game_plugin::actions::Actions;
+use crate::game_plugin::loading::AudioAssets;
+use crate::game_plugin::GameState;
 use bevy::prelude::*;
 use bevy_kira_audio::{Audio, AudioPlugin};
 
@@ -8,13 +8,11 @@ pub struct InternalAudioPlugin;
 
 // This plugin is responsible to controll the game audio
 impl Plugin for InternalAudioPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_plugin(AudioPlugin)
+            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(start_audio))
             .add_system_set(
-                SystemSet::on_enter(GameState::Playing).with_system(start_audio.system()),
-            )
-            .add_system_set(
-                SystemSet::on_update(GameState::Playing).with_system(control_flying_sound.system()),
+                SystemSet::on_update(GameState::Playing).with_system(control_flying_sound),
             );
     }
 }
