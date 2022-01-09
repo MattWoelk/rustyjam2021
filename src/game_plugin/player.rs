@@ -93,15 +93,18 @@ fn spawn_player(mut commands: Commands, texture_atlases: Res<TextureAtlases>) {
 }
 
 fn shoot_enemies_with_keypresses(
+    mut commands: Commands,
     mut key_actions: ResMut<KeyActions>,
-    mut enemies: Query<&mut Enemy>,
+    mut enemies: Query<(Entity, &mut Enemy)>,
 ) {
     let keys_pressed = key_actions.keys_just_pressed.clone();
     // TODO: this should be a set
 
-    for mut enemy in enemies.iter_mut() {
+    for (entity, enemy) in enemies.iter_mut() {
         if keys_pressed.contains(&enemy.letter) {
             // TODO: remove it from the set
+            // TODO: remove the lowest-down enemy, if possible (or maybe just all of them, because that's simplest)
+            commands.entity(entity).despawn();
         }
     }
 

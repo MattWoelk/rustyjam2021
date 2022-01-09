@@ -9,10 +9,54 @@ pub struct Enemy {
     pub(crate) letter: char,
 }
 
+#[derive(Default)]
+pub struct EnemySpawnTimer {
+    time_since_last_spawn: f32,
+}
+
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_enemy))
-            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(move_enemy));
+        app.init_resource::<EnemySpawnTimer>()
+            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_enemy))
+            .add_system_set(
+                SystemSet::on_update(GameState::Playing)
+                    .with_system(move_enemy)
+                    .with_system(enemy_spawner),
+            );
+    }
+}
+
+fn enemy_spawner(
+    time: Res<Time>,
+    textures: Res<TextureAssets>,
+    mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut commands: Commands,
+) {
+    let texture_handle = textures.texture_tileset.clone().into();
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+    // keep track of how much time is passed
+    enemy_spawn_timer.time_since_last_spawn += time.delta_seconds();
+
+    let spawn_period = 1.0f32;
+
+    // TODO: keep track of how long it's been since spawning an enemy, then spawn a new one if it's past the threshold and reset the timer.
+    if enemy_spawn_timer.time_since_last_spawn >= spawn_period {
+        dbg!("spawning", enemy_spawn_timer.time_since_last_spawn);
+
+        enemy_spawn_timer.time_since_last_spawn -= spawn_period;
+        commands
+            .spawn()
+            .insert_bundle(SpriteSheetBundle {
+                texture_atlas: texture_atlas_handle,
+                transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
+                sprite: TextureAtlasSprite::new(189),
+                ..Default::default()
+            })
+            .insert(Timer::from_seconds(0.1, true))
+            .insert(Enemy { letter: 'a' });
     }
 }
 
