@@ -5,7 +5,9 @@ use bevy::prelude::*;
 pub struct EnemyPlugin;
 
 #[derive(Component)]
-pub struct Enemy;
+pub struct Enemy {
+    pub(crate) letter: char,
+}
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
@@ -32,7 +34,7 @@ fn spawn_enemy(
             ..Default::default()
         })
         .insert(Timer::from_seconds(0.1, true))
-        .insert(Enemy);
+        .insert(Enemy { letter: 'a' });
 }
 
 fn move_enemy(

@@ -13,6 +13,12 @@ impl Plugin for ActionsPlugin {
                 .with_system(set_movement_actions.label("gather_input"))
                 .with_system(set_shoot_actions.label("gather_input")),
         );
+
+        app.init_resource::<KeyActions>().add_system_set(
+            SystemSet::on_update(GameState::Playing)
+                .label("gather_input")
+                .with_system(set_keyboard_actions.label("gather_input))")),
+        );
     }
 }
 
@@ -21,6 +27,12 @@ pub struct Actions {
     pub player_movement: Option<Vec2>,
     pub player_shoot: bool,
     pub player_switch_weapon: bool,
+}
+
+#[derive(Default)]
+pub struct KeyActions {
+    pub char_stack: Vec<char>,
+    pub keys_just_pressed: Vec<char>,
 }
 
 fn set_movement_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<KeyCode>>) {
@@ -151,4 +163,21 @@ fn set_shoot_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<Key
     actions.player_shoot = keyboard_input.pressed(KeyCode::Space);
     actions.player_switch_weapon = keyboard_input.just_pressed(KeyCode::LShift)
         || keyboard_input.just_pressed(KeyCode::RShift);
+}
+
+fn set_keyboard_actions(mut action: ResMut<KeyActions>, keyboard_input: Res<Input<KeyCode>>) {
+    let new_chars: Vec<char> = keyboard_input
+        .get_just_pressed()
+        .map(|code: &bevy::prelude::KeyCode| match code {
+            KeyCode::S => 's',
+            KeyCode::A => 'a',
+            _ => '_',
+        })
+        .collect();
+
+    for c in new_chars.iter() {
+        action.char_stack.push(c.clone());
+    }
+
+    action.keys_just_pressed = new_chars;
 }

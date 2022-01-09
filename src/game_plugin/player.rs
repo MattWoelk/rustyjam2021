@@ -1,4 +1,5 @@
-use crate::game_plugin::actions::Actions;
+use crate::game_plugin::actions::{Actions, KeyActions};
+use crate::game_plugin::enemy::Enemy;
 use crate::game_plugin::loading::TextureAtlases;
 use crate::game_plugin::GameState;
 use bevy::prelude::*;
@@ -43,6 +44,7 @@ impl Plugin for PlayerPlugin {
         .add_system_set(
             SystemSet::on_update(GameState::Playing)
                 .with_system(move_player.after("gather_input"))
+                .with_system(shoot_enemies_with_keypresses.after("gather_input"))
                 .with_system(shoot.after("gather_input"))
                 .with_system(bullet_movement.after("gather_input"))
                 .with_system(laser_movement.after("gather_input")),
@@ -86,6 +88,29 @@ fn spawn_player(mut commands: Commands, texture_atlases: Res<TextureAtlases>) {
                     });
                 });
         });
+}
+
+fn shoot_enemies_with_keypresses(key_actions: ResMut<KeyActions>, mut enemies: Query<&mut Enemy>) {
+    let keys_pressed = key_actions.keys_just_pressed.clone();
+    // TODO: this should be a set
+
+    for mut enemy in enemies.iter_mut() {
+        if keys_pressed.contains(&enemy.letter) {
+            // TODO: remove it from the set
+        }
+    }
+
+    // TODO: see if we spelt a word, and make a thing happen in that case? but that won't all happen in the same frame, so we need to keep track ...
+    //       and we'll need to show on screen what was typed and in what order, so people can see if there's a word there.
+
+    // TODO: idea: it's always checking the last thing you typed, and it clears those letters if they spell a word
+    //             your goal is to get rid of your whole stack, which gives you a boost of some sort.
+}
+
+fn find_ending_word(text: &str) -> Option<usize> {
+    let all_words = include_str!("../../assets/words_alpha.txt");
+
+    // TODO: is there a fast way to do this? Maybe if the word lists were split into lengths, and sorted?
 }
 
 fn move_player(

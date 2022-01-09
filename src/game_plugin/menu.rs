@@ -21,7 +21,6 @@ struct ButtonColors {
 
 impl FromWorld for ButtonColors {
     fn from_world(world: &mut World) -> Self {
-        let mut materials = world.get_resource_mut::<Assets<ColorMaterial>>().unwrap();
         ButtonColors {
             normal: Color::rgb(0.15, 0.15, 0.15).into(),
             hovered: Color::rgb(0.25, 0.25, 0.25).into(),
