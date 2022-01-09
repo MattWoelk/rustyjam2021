@@ -186,10 +186,34 @@ fn set_shoot_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<Key
 fn set_keyboard_actions(mut action: ResMut<KeyActions>, keyboard_input: Res<Input<KeyCode>>) {
     let new_chars: Vec<char> = keyboard_input
         .get_just_pressed()
-        .map(|code: &bevy::prelude::KeyCode| match code {
-            KeyCode::S => 's',
-            KeyCode::A => 'a',
-            _ => '_',
+        .filter_map(|code: &bevy::prelude::KeyCode| match code {
+            KeyCode::A => Some('a'),
+            KeyCode::B => Some('b'),
+            KeyCode::C => Some('c'),
+            KeyCode::D => Some('d'),
+            KeyCode::E => Some('e'),
+            KeyCode::F => Some('f'),
+            KeyCode::G => Some('g'),
+            KeyCode::H => Some('h'),
+            KeyCode::I => Some('i'),
+            KeyCode::J => Some('j'),
+            KeyCode::K => Some('k'),
+            KeyCode::L => Some('l'),
+            KeyCode::M => Some('m'),
+            KeyCode::N => Some('n'),
+            KeyCode::O => Some('o'),
+            KeyCode::P => Some('p'),
+            KeyCode::Q => Some('q'),
+            KeyCode::R => Some('r'),
+            KeyCode::S => Some('s'),
+            KeyCode::T => Some('t'),
+            KeyCode::U => Some('u'),
+            KeyCode::V => Some('v'),
+            KeyCode::W => Some('w'),
+            KeyCode::X => Some('x'),
+            KeyCode::Y => Some('y'),
+            KeyCode::Z => Some('z'),
+            _ => None,
         })
         .collect();
 
