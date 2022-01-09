@@ -1,5 +1,6 @@
 use crate::game_plugin::GameState;
 use bevy::prelude::*;
+use std::collections::HashSet;
 
 pub struct ActionsPlugin;
 
@@ -29,10 +30,25 @@ pub struct Actions {
     pub player_switch_weapon: bool,
 }
 
-#[derive(Default)]
 pub struct KeyActions {
     pub char_stack: Vec<char>,
     pub keys_just_pressed: Vec<char>,
+    pub all_words: HashSet<String>,
+}
+
+impl Default for KeyActions {
+    fn default() -> Self {
+        let all_words = include_str!("../../assets/words_alpha.txt")
+            .lines()
+            .map(|l| l.to_string())
+            .collect::<HashSet<_>>();
+
+        KeyActions {
+            char_stack: vec![],
+            keys_just_pressed: vec![],
+            all_words,
+        }
+    }
 }
 
 fn set_movement_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<KeyCode>>) {

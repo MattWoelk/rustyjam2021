@@ -49,10 +49,10 @@ impl Plugin for GamePlugin {
             .add_plugin(SecondsTimerPlugin)
             .add_system(bevy::input::system::exit_on_esc_system);
 
-        #[cfg(debug_assertions)]
-        {
-            app.add_plugin(FrameTimeDiagnosticsPlugin::default())
-                .add_plugin(LogDiagnosticsPlugin::default());
-        }
+        //#[cfg(debug_assertions)]
+        //{
+        //    app.add_plugin(FrameTimeDiagnosticsPlugin::default())
+        //        .add_plugin(LogDiagnosticsPlugin::default());
+        //}
     }
 }

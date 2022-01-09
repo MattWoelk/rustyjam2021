@@ -15,7 +15,7 @@ impl Plugin for LoadingPlugin {
             .with_collection::<AudioAssets>()
             .with_collection::<TextureAssets>()
             .init_resource::<TextureAtlases>()
-            .continue_to_state(GameState::Menu)
+            .continue_to_state(GameState::Playing)
             .build(app);
     }
 }

@@ -3,6 +3,7 @@ use crate::game_plugin::enemy::Enemy;
 use crate::game_plugin::loading::TextureAtlases;
 use crate::game_plugin::GameState;
 use bevy::prelude::*;
+use std::collections::HashSet;
 
 pub struct PlayerPlugin;
 
@@ -100,6 +101,10 @@ fn shoot_enemies_with_keypresses(key_actions: ResMut<KeyActions>, mut enemies: Q
         }
     }
 
+    let stack = key_actions.char_stack.iter().collect::<String>();
+
+    dbg!(&stack, find_ending_word(&stack, &key_actions.all_words));
+
     // TODO: see if we spelt a word, and make a thing happen in that case? but that won't all happen in the same frame, so we need to keep track ...
     //       and we'll need to show on screen what was typed and in what order, so people can see if there's a word there.
 
@@ -107,10 +112,30 @@ fn shoot_enemies_with_keypresses(key_actions: ResMut<KeyActions>, mut enemies: Q
     //             your goal is to get rid of your whole stack, which gives you a boost of some sort.
 }
 
-fn find_ending_word(text: &str) -> Option<usize> {
-    let all_words = include_str!("../../assets/words_alpha.txt");
+fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<usize> {
+    if text.len() < 3 {
+        return None;
+    }
 
-    // TODO: is there a fast way to do this? Maybe if the word lists were split into lengths, and sorted?
+    // TODO: is there a fast way to do this? Maybe if the word lists were split into lengths, and sorted? Or put in a set each?
+    for length in (3..=text.len()).rev() {
+        let substring = text
+            .chars()
+            .rev()
+            .take(length)
+            .collect::<String>()
+            .chars()
+            .rev()
+            .collect::<String>();
+
+        dbg!(&substring);
+
+        if all_words.contains(&substring) {
+            return Some(length);
+        }
+    }
+
+    None
 }
 
 fn move_player(
