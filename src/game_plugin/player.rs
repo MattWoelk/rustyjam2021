@@ -110,15 +110,25 @@ fn shoot_enemies_with_keypresses(
 
     let stack = key_actions.char_stack.iter().collect::<String>();
 
+    // TODO: check for words, and underline it if there's a find.
+    //let found_word: Option<String> = key_actions
+    //    .new_press
+    //    .then(|| {})
+    //    .and(find_ending_word(&stack, &key_actions.all_words));
+
+    // TODO: only do this when there's a new press, and store it somewhere (probably in a different system)
+    let found_word = find_ending_word(&stack, &key_actions.all_words);
+
     // TODO: should this be its own system? Probably.
-    if key_actions.new_press {
-        if let Some(number_of_letters) = find_ending_word(&stack, &key_actions.all_words) {
-            dbg!(number_of_letters);
+    if key_actions.space_pressed {
+        if let Some(word) = found_word {
+            dbg!(&word);
+
+            let number_of_letters = word.len();
             let stack_len = key_actions.char_stack.len();
             key_actions
                 .char_stack
                 .truncate(stack_len - number_of_letters);
-            dbg!(key_actions.char_stack.iter().collect::<String>());
         }
     }
 
@@ -129,7 +139,7 @@ fn shoot_enemies_with_keypresses(
     //             your goal is to get rid of your whole stack, which gives you a boost of some sort.
 }
 
-fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<usize> {
+fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<String> {
     //let now = Instant::now();
 
     if text.len() < 3 {
@@ -145,7 +155,7 @@ fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<usize> {
         if all_words.contains(&substring) {
             //dbg!(now.elapsed());
             //dbg!(&substring);
-            return Some(length);
+            return Some(substring);
         }
     }
 

@@ -44,7 +44,7 @@ fn enemy_spawner(
 
     // TODO: keep track of how long it's been since spawning an enemy, then spawn a new one if it's past the threshold and reset the timer.
     if enemy_spawn_timer.time_since_last_spawn >= spawn_period {
-        dbg!("spawning", enemy_spawn_timer.time_since_last_spawn);
+        //dbg!("spawning", enemy_spawn_timer.time_since_last_spawn);
 
         enemy_spawn_timer.time_since_last_spawn -= spawn_period;
         commands

@@ -34,6 +34,7 @@ pub struct KeyActions {
     pub new_press: bool,
     pub char_stack: Vec<char>,
     pub keys_just_pressed: Vec<char>,
+    pub space_pressed: bool,
     pub all_words: HashSet<String>,
 }
 
@@ -48,6 +49,7 @@ impl Default for KeyActions {
             new_press: false,
             char_stack: vec![],
             keys_just_pressed: vec![],
+            space_pressed: false,
             all_words,
         }
     }
@@ -223,4 +225,5 @@ fn set_keyboard_actions(mut action: ResMut<KeyActions>, keyboard_input: Res<Inpu
 
     action.new_press = new_chars.len() > 0;
     action.keys_just_pressed = new_chars;
+    action.space_pressed = keyboard_input.just_pressed(KeyCode::Space);
 }
