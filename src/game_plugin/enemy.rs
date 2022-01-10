@@ -2,6 +2,10 @@ use crate::game_plugin::loading::TextureAssets;
 use crate::game_plugin::GameState;
 use bevy::prelude::*;
 
+use rand::distributions::Distribution;
+use rand::distributions::WeightedIndex;
+use rand::{thread_rng, Rng};
+
 pub struct EnemyPlugin;
 
 #[derive(Component)]
@@ -37,6 +41,37 @@ fn enemy_spawner(
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
+    let letter_weights = [
+        ('a', 9),
+        ('b', 2),
+        ('c', 2),
+        ('d', 4),
+        ('e', 12),
+        ('f', 2),
+        ('g', 3),
+        ('h', 2),
+        ('i', 9),
+        ('j', 1),
+        ('k', 1),
+        ('l', 4),
+        ('m', 2),
+        ('n', 6),
+        ('o', 8),
+        ('p', 2),
+        ('q', 1),
+        ('r', 6),
+        ('s', 4),
+        ('t', 6),
+        ('u', 4),
+        ('v', 2),
+        ('w', 2),
+        ('x', 1),
+        ('y', 2),
+        ('z', 1),
+    ];
+    let dist = WeightedIndex::new(letter_weights.iter().map(|i| i.1)).unwrap();
+    let mut rng = thread_rng();
+
     // keep track of how much time is passed
     enemy_spawn_timer.time_since_last_spawn += time.delta_seconds();
 
@@ -56,7 +91,9 @@ fn enemy_spawner(
                 ..Default::default()
             })
             .insert(Timer::from_seconds(0.1, true))
-            .insert(Enemy { letter: 'a' });
+            .insert(Enemy {
+                letter: letter_weights[dist.sample(&mut rng)].0,
+            });
     }
 }
 
@@ -87,7 +124,7 @@ fn move_enemy(
     mut sprite_query: Query<(&mut Timer, &mut TextureAtlasSprite)>,
 ) {
     for mut transform in movement_query.iter_mut() {
-        transform.translation += Vec3::new(0., 4., 0.);
+        transform.translation += Vec3::new(0., -4., 0.);
     }
 
     // rapidly swap its texture, like it's an animation or something.
