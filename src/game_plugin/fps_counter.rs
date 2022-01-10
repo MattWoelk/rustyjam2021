@@ -77,7 +77,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         value: "FPS: ".to_string(),
                         style: TextStyle {
                             font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                            font_size: 60.0,
+                            font_size: 120.0,
                             color: Color::WHITE,
                         },
                     },
@@ -85,7 +85,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         value: "".to_string(),
                         style: TextStyle {
                             font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                            font_size: 60.0,
+                            font_size: 120.0,
                             color: Color::GOLD,
                         },
                     },
