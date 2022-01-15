@@ -1,20 +1,20 @@
 mod actions;
 mod audio;
 mod enemy;
-mod fps_counter;
 mod loading;
 mod menu;
 mod overlap;
 mod player;
+mod player_text_input;
 mod seconds_timer;
 
 use crate::game_plugin::actions::ActionsPlugin;
 use crate::game_plugin::audio::InternalAudioPlugin;
 use crate::game_plugin::enemy::EnemyPlugin;
-use crate::game_plugin::fps_counter::FPSCounterPlugin;
 use crate::game_plugin::loading::LoadingPlugin;
 use crate::game_plugin::menu::MenuPlugin;
 use crate::game_plugin::player::PlayerPlugin;
+use crate::game_plugin::player_text_input::PlayerTextInputPlugin;
 use crate::game_plugin::seconds_timer::SecondsTimerPlugin;
 use bevy::app::App;
 #[cfg(debug_assertions)]
@@ -34,6 +34,12 @@ enum GameState {
     Menu,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, SystemLabel)]
+enum SystemLabels {
+    GatherInput,
+    EvaluateInput,
+}
+
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
@@ -45,14 +51,8 @@ impl Plugin for GamePlugin {
             .add_plugin(InternalAudioPlugin)
             .add_plugin(PlayerPlugin)
             .add_plugin(EnemyPlugin)
-            .add_plugin(FPSCounterPlugin)
+            .add_plugin(PlayerTextInputPlugin)
             .add_plugin(SecondsTimerPlugin)
             .add_system(bevy::input::system::exit_on_esc_system);
-
-        //#[cfg(debug_assertions)]
-        //{
-        //    app.add_plugin(FrameTimeDiagnosticsPlugin::default())
-        //        .add_plugin(LogDiagnosticsPlugin::default());
-        //}
     }
 }

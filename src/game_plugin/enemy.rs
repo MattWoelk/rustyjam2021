@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
-use rand::{thread_rng, Rng};
+use rand::thread_rng;
 
 pub struct EnemyPlugin;
 

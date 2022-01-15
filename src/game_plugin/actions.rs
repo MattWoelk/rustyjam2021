@@ -1,4 +1,5 @@
 use crate::game_plugin::GameState;
+use crate::game_plugin::SystemLabels::GatherInput;
 use bevy::prelude::*;
 use std::collections::HashSet;
 
@@ -10,15 +11,15 @@ impl Plugin for ActionsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Actions>().add_system_set(
             SystemSet::on_update(GameState::Playing)
-                .label("gather_input")
-                .with_system(set_movement_actions.label("gather_input"))
-                .with_system(set_shoot_actions.label("gather_input")),
+                .label(GatherInput)
+                .with_system(set_movement_actions.label(GatherInput))
+                .with_system(set_shoot_actions.label(GatherInput)),
         );
 
         app.init_resource::<KeyActions>().add_system_set(
             SystemSet::on_update(GameState::Playing)
-                .label("gather_input")
-                .with_system(set_keyboard_actions.label("gather_input))")),
+                .label(GatherInput)
+                .with_system(set_keyboard_actions.label(GatherInput)),
         );
     }
 }
@@ -229,6 +230,7 @@ fn set_keyboard_actions(mut action: ResMut<KeyActions>, keyboard_input: Res<Inpu
     action.keys_just_pressed = new_chars;
     action.space_pressed = keyboard_input.just_pressed(KeyCode::Space);
 
+    // TODO: how often do we need to run this?
     //if action.new_press || action.space_pressed {
     action.longest_word_option = find_ending_word(
         &action.char_stack.iter().collect::<String>(),
@@ -238,25 +240,17 @@ fn set_keyboard_actions(mut action: ResMut<KeyActions>, keyboard_input: Res<Inpu
 }
 
 fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<String> {
-    //let now = Instant::now();
-
     if text.len() < 3 {
         return None;
     }
 
-    // TODO: is there a fast way to do this? Maybe if the word lists were split into lengths, and sorted? Or put in a set each?
-    // TODO: actually, maybe this is fast enough now (0.3ms for 15 letters with no matches)
-    // TODO: that was in debug. In release it should be even faster. :)
     for length in (3..=text.len()).rev() {
         let substring: String = text.chars().skip(text.len() - length).collect();
 
         if all_words.contains(&substring) {
-            //dbg!(now.elapsed());
-            //dbg!(&substring);
             return Some(substring);
         }
     }
 
-    //dbg!(now.elapsed());
     None
 }
