@@ -222,11 +222,11 @@ fn set_keyboard_actions(mut action: ResMut<KeyActions>, keyboard_input: Res<Inpu
         })
         .collect();
 
-    for c in new_chars.iter() {
-        action.char_stack.push(c.clone());
+    for &c in new_chars.iter() {
+        action.char_stack.push(c);
     }
 
-    action.new_press = new_chars.len() > 0;
+    action.new_press = !new_chars.is_empty();
     action.keys_just_pressed = new_chars;
     action.space_pressed = keyboard_input.just_pressed(KeyCode::Space);
 

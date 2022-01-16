@@ -3,7 +3,6 @@ mod audio;
 mod enemy;
 mod loading;
 mod menu;
-mod overlap;
 mod player;
 mod player_text_input;
 mod seconds_timer;
@@ -18,7 +17,6 @@ use crate::game_plugin::player_text_input::PlayerTextInputPlugin;
 use crate::game_plugin::seconds_timer::SecondsTimerPlugin;
 use bevy::app::App;
 #[cfg(debug_assertions)]
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 
 // This example game uses States to separate logic

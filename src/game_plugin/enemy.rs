@@ -37,7 +37,7 @@ fn enemy_spawner(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut commands: Commands,
 ) {
-    let texture_handle = textures.texture_tileset.clone().into();
+    let texture_handle = textures.texture_tileset.clone();
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
@@ -102,7 +102,7 @@ fn spawn_enemy(
     textures: Res<TextureAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let texture_handle = textures.texture_tileset.clone().into();
+    let texture_handle = textures.texture_tileset.clone();
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 

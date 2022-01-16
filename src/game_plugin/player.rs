@@ -3,7 +3,6 @@ use crate::game_plugin::enemy::Enemy;
 use crate::game_plugin::GameState;
 use crate::game_plugin::SystemLabels::{EvaluateInput, GatherInput};
 use bevy::prelude::*;
-use std::collections::HashSet;
 
 pub struct PlayerPlugin;
 

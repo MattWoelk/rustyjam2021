@@ -20,7 +20,7 @@ struct ButtonColors {
 }
 
 impl FromWorld for ButtonColors {
-    fn from_world(world: &mut World) -> Self {
+    fn from_world(_: &mut World) -> Self {
         ButtonColors {
             normal: Color::rgb(0.15, 0.15, 0.15).into(),
             hovered: Color::rgb(0.25, 0.25, 0.25).into(),
@@ -46,7 +46,7 @@ fn setup_menu(
                 align_items: AlignItems::Center,
                 ..Default::default()
             },
-            color: button_colors.normal.clone(),
+            color: button_colors.normal,
             ..Default::default()
         })
         .insert(PlayButton)
@@ -86,10 +86,10 @@ fn click_play_button(
                 state.set(GameState::Playing).unwrap();
             }
             Interaction::Hovered => {
-                *color = button_colors.hovered.clone();
+                *color = button_colors.hovered;
             }
             Interaction::None => {
-                *color = button_colors.normal.clone();
+                *color = button_colors.normal;
             }
         }
     }

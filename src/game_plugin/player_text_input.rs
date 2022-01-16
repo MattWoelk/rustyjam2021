@@ -1,9 +1,6 @@
 use crate::game_plugin::actions::KeyActions;
 use crate::game_plugin::SystemLabels;
-use bevy::{
-    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
-    prelude::*,
-};
+use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 
 pub struct PlayerTextInputPlugin;
 
@@ -66,7 +63,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         },
                     },
                 ],
-                ..Default::default()
             },
             ..Default::default()
         })
@@ -82,7 +78,7 @@ fn text_update_system(key_actions: ResMut<KeyActions>, mut query: Query<&mut Tex
             stack.len()
         };
 
-        text.sections[0].value = format!("{}", stack[0..split_index].iter().collect::<String>());
-        text.sections[1].value = format!("{}", stack[split_index..].iter().collect::<String>());
+        text.sections[0].value = stack[0..split_index].iter().collect::<String>().to_string();
+        text.sections[1].value = stack[split_index..].iter().collect::<String>().to_string();
     }
 }
