@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
-use rand::thread_rng;
+use rand::{thread_rng, Rng};
 
 pub struct EnemyPlugin;
 
@@ -21,7 +21,7 @@ pub struct EnemySpawnTimer {
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<EnemySpawnTimer>()
-            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_enemy))
+            .add_system_set(SystemSet::on_enter(GameState::Playing))
             .add_system_set(
                 SystemSet::on_update(GameState::Playing)
                     .with_system(move_enemy)
@@ -35,6 +35,7 @@ fn enemy_spawner(
     textures: Res<TextureAssets>,
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
     let texture_handle = textures.texture_tileset.clone();
@@ -81,6 +82,10 @@ fn enemy_spawner(
     if enemy_spawn_timer.time_since_last_spawn >= spawn_period {
         //dbg!("spawning", enemy_spawn_timer.time_since_last_spawn);
 
+        let screen_dimensions = (960., 540.);
+        let letter = letter_weights[dist.sample(&mut rng)].0;
+        let screen_percent: f32 = rng.gen_range(0.1f32..0.9f32);
+
         enemy_spawn_timer.time_since_last_spawn -= spawn_period;
         commands
             .spawn()
@@ -90,41 +95,46 @@ fn enemy_spawner(
                 sprite: TextureAtlasSprite::new(189),
                 ..Default::default()
             })
+            .insert_bundle(TextBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    position: Rect {
+                        left: Val::Px(screen_dimensions.0 * screen_percent),
+                        bottom: Val::Px(screen_dimensions.1 * 3. / 4.),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                text: Text {
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Center,
+                        horizontal: HorizontalAlign::Center,
+                    },
+                    sections: vec![TextSection {
+                        value: letter.to_string(),
+                        style: TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 120.0,
+                            color: Color::WHITE,
+                        },
+                    }],
+                },
+                ..Default::default()
+            })
             .insert(Timer::from_seconds(0.1, true))
-            .insert(Enemy {
-                letter: letter_weights[dist.sample(&mut rng)].0,
-            });
+            .insert(Enemy { letter });
     }
-}
-
-fn spawn_enemy(
-    mut commands: Commands,
-    textures: Res<TextureAssets>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-) {
-    let texture_handle = textures.texture_tileset.clone();
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-
-    commands
-        .spawn()
-        .insert_bundle(SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
-            transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
-            sprite: TextureAtlasSprite::new(189),
-            ..Default::default()
-        })
-        .insert(Timer::from_seconds(0.1, true))
-        .insert(Enemy { letter: 'a' });
 }
 
 fn move_enemy(
     time: Res<Time>,
-    mut movement_query: Query<&mut Transform, With<Enemy>>,
+    mut movement_query: Query<(&mut Transform, &mut Style), With<Enemy>>,
     mut sprite_query: Query<(&mut Timer, &mut TextureAtlasSprite)>,
 ) {
-    for mut transform in movement_query.iter_mut() {
+    for (mut transform, mut style) in movement_query.iter_mut() {
         transform.translation += Vec3::new(0., -4., 0.);
+        style.position.bottom += -1.;
+        style.position.left += -0.;
     }
 
     // rapidly swap its texture, like it's an animation or something.
