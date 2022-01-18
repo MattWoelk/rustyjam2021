@@ -18,6 +18,7 @@ use crate::game_plugin::seconds_timer::SecondsTimerPlugin;
 use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::prelude::*;
+use bevy_inspector_egui::WorldInspectorPlugin;
 
 // This example game uses States to separate logic
 // See https://bevy-cheatbook.github.io/programming/states.html
@@ -51,6 +52,7 @@ impl Plugin for GamePlugin {
             .add_plugin(EnemyPlugin)
             .add_plugin(PlayerTextInputPlugin)
             .add_plugin(SecondsTimerPlugin)
+            //.add_plugin(WorldInspectorPlugin::new())
             .add_system(bevy::input::system::exit_on_esc_system);
     }
 }
