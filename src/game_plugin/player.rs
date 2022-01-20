@@ -30,17 +30,29 @@ fn spawn_camera(mut commands: Commands) {
 fn shoot_enemies_with_keypresses(
     mut commands: Commands,
     mut key_actions: ResMut<KeyActions>,
-    mut enemies: Query<(Entity, &mut Enemy)>,
+    mut enemies: Query<(Entity, &Transform, &mut Enemy)>,
 ) {
     let keys_pressed = key_actions.keys_just_pressed.clone();
-    // TODO: this should be a set
+    // TODO: keys_pressed should be a set
 
-    for (entity, enemy) in enemies.iter_mut() {
+    let mut lowest_enemy: Option<(Entity, &Transform)> = None;
+
+    for (entity, transform, enemy) in enemies.iter_mut() {
         if keys_pressed.contains(&enemy.letter) {
-            // TODO: remove it from the set
-            // TODO: remove the lowest-down enemy, if possible (or maybe just all of them, because that's simplest)
-            commands.entity(entity).despawn();
+            lowest_enemy = if let Some((_, old_transform)) = lowest_enemy {
+                if old_transform.translation.y > transform.translation.y {
+                    Some((entity, transform))
+                } else {
+                    lowest_enemy
+                }
+            } else {
+                Some((entity, transform))
+            }
         }
+    }
+
+    if let Some((lowest_enemy, _)) = lowest_enemy {
+        commands.entity(lowest_enemy).despawn();
     }
 
     let found_word = &key_actions.longest_word_option;

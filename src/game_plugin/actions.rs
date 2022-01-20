@@ -1,3 +1,4 @@
+use crate::game_plugin::enemy::Enemy;
 use crate::game_plugin::GameState;
 use crate::game_plugin::SystemLabels::GatherInput;
 use bevy::prelude::*;
@@ -188,7 +189,11 @@ fn set_shoot_actions(mut actions: ResMut<Actions>, keyboard_input: Res<Input<Key
         || keyboard_input.just_pressed(KeyCode::RShift);
 }
 
-fn set_keyboard_actions(mut action: ResMut<KeyActions>, keyboard_input: Res<Input<KeyCode>>) {
+fn set_keyboard_actions(
+    mut action: ResMut<KeyActions>,
+    keyboard_input: Res<Input<KeyCode>>,
+    enemies: Query<&Enemy>,
+) {
     let new_chars: Vec<char> = keyboard_input
         .get_just_pressed()
         .filter_map(|code: &bevy::prelude::KeyCode| match code {
@@ -223,7 +228,9 @@ fn set_keyboard_actions(mut action: ResMut<KeyActions>, keyboard_input: Res<Inpu
         .collect();
 
     for &c in new_chars.iter() {
-        action.char_stack.push(c);
+        if enemies.iter().any(|e| e.letter == c) {
+            action.char_stack.push(c);
+        }
     }
 
     action.new_press = !new_chars.is_empty();
