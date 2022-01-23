@@ -116,7 +116,7 @@ fn enemy_spawner(
                     sections: vec![TextSection {
                         value: letter.to_string(),
                         style: TextStyle {
-                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
                             font_size: 120.0,
                             color: Color::WHITE,
                         },

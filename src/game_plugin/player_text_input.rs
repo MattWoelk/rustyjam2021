@@ -47,9 +47,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 sections: vec![
                     TextSection {
-                        value: "FPS: ".to_string(),
+                        value: "".to_string(),
                         style: TextStyle {
-                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
                             font_size: 120.0,
                             color: Color::WHITE,
                         },
@@ -57,9 +57,17 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     TextSection {
                         value: "".to_string(),
                         style: TextStyle {
-                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
                             font_size: 120.0,
                             color: Color::GOLD,
+                        },
+                    },
+                    TextSection {
+                        value: "__________".to_string(),
+                        style: TextStyle {
+                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
+                            font_size: 120.0,
+                            color: Color::GRAY,
                         },
                     },
                 ],
@@ -78,7 +86,11 @@ fn text_update_system(key_actions: ResMut<KeyActions>, mut query: Query<&mut Tex
             stack.len()
         };
 
+        // TODO: 10 should not be a magic number.
+        let stack_length = stack.len().min(10);
+
         text.sections[0].value = stack[0..split_index].iter().collect::<String>().to_string();
         text.sections[1].value = stack[split_index..].iter().collect::<String>().to_string();
+        text.sections[2].value = (0..10 - stack_length).map(|_| '_').collect();
     }
 }
