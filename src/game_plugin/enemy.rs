@@ -2,6 +2,8 @@ use crate::game_plugin::loading::TextureAssets;
 use crate::game_plugin::GameState;
 use bevy::prelude::*;
 
+use crate::game_plugin::actions::KeyActions;
+use crate::game_plugin::SystemLabels::MoveEnemies;
 use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
 use rand::{thread_rng, Rng};
@@ -24,8 +26,9 @@ impl Plugin for EnemyPlugin {
             .add_system_set(SystemSet::on_enter(GameState::Playing))
             .add_system_set(
                 SystemSet::on_update(GameState::Playing)
-                    .with_system(move_enemy)
-                    .with_system(enemy_spawner),
+                    .with_system(move_enemy.label(MoveEnemies))
+                    .with_system(enemy_spawner)
+                    .with_system(check_lose.after(MoveEnemies)),
             );
     }
 }
@@ -132,7 +135,7 @@ fn move_enemy(
     mut sprite_query: Query<(&mut Timer, &mut TextureAtlasSprite)>,
 ) {
     for (mut transform, mut style) in movement_query.iter_mut() {
-        transform.translation += Vec3::new(0., -4., 0.);
+        transform.translation += Vec3::new(0., -3., 0.);
         style.position.bottom += -1.;
         style.position.left += -0.;
     }
@@ -149,5 +152,21 @@ fn move_enemy(
             sprite.index =
                 anim_sprite_sheet_indices[(current_index + 1) % anim_sprite_sheet_indices.len()];
         }
+    }
+}
+
+fn check_lose(
+    mut state: ResMut<State<GameState>>,
+    key_actions: ResMut<KeyActions>,
+    enemies: Query<&Transform, With<Enemy>>,
+) {
+    for enemy_transform in enemies.iter() {
+        if enemy_transform.translation.y < 100. {
+            state.set(GameState::PlayingLose).unwrap();
+        }
+    }
+
+    if key_actions.char_stack.clone().len() > 10 {
+        state.set(GameState::PlayingLose).unwrap();
     }
 }
