@@ -8,6 +8,8 @@ use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
 use rand::{thread_rng, Rng};
 
+const PHI: f32 = 1.61803; // The golden ratio
+
 pub struct EnemyPlugin;
 
 #[derive(Component)]
@@ -18,6 +20,7 @@ pub struct Enemy {
 #[derive(Default)]
 pub struct EnemySpawnTimer {
     time_since_last_spawn: f32,
+    last_spawn_location: f32,
 }
 
 impl Plugin for EnemyPlugin {
@@ -81,15 +84,21 @@ fn enemy_spawner(
 
     let spawn_period = 1.0f32;
 
-    // TODO: keep track of how long it's been since spawning an enemy, then spawn a new one if it's past the threshold and reset the timer.
+    // keep track of how long it's been since spawning an enemy, then spawn a new one if it's past the threshold and reset the timer.
     if enemy_spawn_timer.time_since_last_spawn >= spawn_period {
-        //dbg!("spawning", enemy_spawn_timer.time_since_last_spawn);
-
         let screen_dimensions = (960., 540.);
         let letter = letter_weights[dist.sample(&mut rng)].0;
-        let screen_percent: f32 = rng.gen_range(0.1f32..0.9f32);
+
+        let screen_percent =
+            (enemy_spawn_timer.last_spawn_location + PHI + rng.gen_range(-0.1f32..0.1f32)) % 1.0;
+        enemy_spawn_timer.last_spawn_location = screen_percent;
 
         enemy_spawn_timer.time_since_last_spawn -= spawn_period;
+
+        // add buffer to screen percent, so enemies don't spawn too close to the edges
+        let buffer_percent = 0.1f32;
+        let screen_percent = (screen_percent * (1f32 - 2f32 * buffer_percent)) + buffer_percent;
+
         commands
             .spawn()
             .insert_bundle(SpriteSheetBundle {
