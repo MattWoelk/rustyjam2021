@@ -1,8 +1,12 @@
 use crate::game_plugin::actions::KeyActions;
-use crate::game_plugin::enemy::Enemy;
+use crate::game_plugin::enemy::{Enemy, EnemyDeathParticle};
 use crate::game_plugin::GameState;
 use crate::game_plugin::SystemLabels::{EvaluateInput, GatherInput};
+use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use bevy::prelude::*;
+use bevy_prototype_lyon::prelude::*;
+use rand::{thread_rng, Rng};
+use std::f32::consts::TAU;
 
 pub struct PlayerPlugin;
 
@@ -32,6 +36,9 @@ fn shoot_enemies_with_keypresses(
     mut key_actions: ResMut<KeyActions>,
     mut enemies: Query<(Entity, &Transform, &mut Enemy)>,
 ) {
+    // subtract this to go from screen/bevy space to shape space
+    let screen_to_shape: Vec3 = Vec3::new(SCREEN_WIDTH / 2., SCREEN_HEIGHT / 2., 0.);
+
     let keys_pressed = key_actions.keys_just_pressed.clone();
     // TODO: keys_pressed should be a set
 
@@ -51,8 +58,35 @@ fn shoot_enemies_with_keypresses(
         }
     }
 
-    if let Some((lowest_enemy, _)) = lowest_enemy {
+    if let Some((lowest_enemy, transform)) = lowest_enemy {
         commands.entity(lowest_enemy).despawn();
+
+        let shape = shapes::Rectangle {
+            extents: Vec2::new(20., 20.),
+            origin: RectangleOrigin::Center,
+        };
+
+        let mut rng = thread_rng();
+        for _ in 0..10 {
+            let angle: f32 = rng.gen_range(0.0..TAU);
+            let magnitude: f32 = rng.gen_range(1.0..10.0);
+
+            let velocity = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.);
+
+            let location: Vec3 = transform.translation - screen_to_shape;
+            let location = location + (velocity * 4.);
+
+            commands
+                .spawn_bundle(GeometryBuilder::build_as(
+                    &shape,
+                    DrawMode::Fill(FillMode {
+                        options: Default::default(),
+                        color: Default::default(),
+                    }),
+                    Transform::from_translation(location),
+                ))
+                .insert(EnemyDeathParticle { velocity });
+        }
     }
 
     let found_word = &key_actions.longest_word_option;

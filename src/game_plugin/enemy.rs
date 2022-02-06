@@ -1,6 +1,7 @@
 use crate::game_plugin::loading::TextureAssets;
 use crate::game_plugin::GameState;
 use bevy::prelude::*;
+use bevy_prototype_lyon::prelude::*;
 
 use crate::game_plugin::actions::KeyActions;
 use crate::game_plugin::SystemLabels::MoveEnemies;
@@ -9,12 +10,22 @@ use rand::distributions::WeightedIndex;
 use rand::{thread_rng, Rng};
 
 const PHI: f32 = 1.61803; // The golden ratio
+const KILL_LINE_Y: f32 = -150.;
+const ENEMY_FALL_SPEED: f32 = 20.0;
 
 pub struct EnemyPlugin;
 
 #[derive(Component)]
 pub struct Enemy {
     pub(crate) letter: char,
+}
+
+#[derive(Component)]
+pub struct KillLine;
+
+#[derive(Component)]
+pub struct EnemyDeathParticle {
+    pub velocity: Vec3,
 }
 
 #[derive(Default)]
@@ -32,8 +43,43 @@ impl Plugin for EnemyPlugin {
                     .with_system(move_enemy.label(MoveEnemies))
                     .with_system(enemy_spawner)
                     .with_system(check_lose.after(MoveEnemies)),
-            );
+            )
+            .add_startup_system(startup_kill_line)
+            .add_system(update_enemy_death_particles);
     }
+}
+
+/// move and shrink the particles, and remove them when they're too small
+fn update_enemy_death_particles(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Transform, &EnemyDeathParticle)>,
+) {
+    for (entity, mut transform, particle) in query.iter_mut() {
+        transform.translation += particle.velocity;
+        transform.scale *= 0.9f32;
+
+        if transform.scale.x < 0.1 {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+fn startup_kill_line(mut commands: Commands) {
+    let shape = shapes::Rectangle {
+        extents: Vec2::new(800., 3.),
+        origin: RectangleOrigin::Center,
+    };
+
+    commands
+        .spawn_bundle(GeometryBuilder::build_as(
+            &shape,
+            DrawMode::Fill(FillMode {
+                options: Default::default(),
+                color: Default::default(),
+            }),
+            Transform::from_translation(Vec3::new(0., KILL_LINE_Y, 0.)),
+        ))
+        .insert(KillLine);
 }
 
 fn enemy_spawner(
@@ -143,10 +189,8 @@ fn move_enemy(
     mut movement_query: Query<&mut Style, With<Enemy>>,
     mut sprite_query: Query<(&mut Timer, &mut TextureAtlasSprite)>,
 ) {
-    let fall_speed = 30.0;
-
     for mut style in movement_query.iter_mut() {
-        style.position.bottom += -fall_speed * time.delta_seconds();
+        style.position.bottom += -ENEMY_FALL_SPEED * time.delta_seconds();
     }
 
     // rapidly swap its texture, like it's an animation or something.
@@ -170,7 +214,8 @@ fn check_lose(
     enemies: Query<&Transform, With<Enemy>>,
 ) {
     for enemy_transform in enemies.iter() {
-        if enemy_transform.translation.y < 100. {
+        // TODO: this logic might not be very precise, if font size changes, etc.
+        if enemy_transform.translation.y < -KILL_LINE_Y {
             state.set(GameState::PlayingLose).unwrap();
         }
     }
