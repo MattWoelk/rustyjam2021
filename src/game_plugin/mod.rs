@@ -4,8 +4,8 @@ mod enemy;
 mod loading;
 mod menu;
 mod player;
-mod player_text_input;
 mod seconds_timer;
+mod tray;
 
 use crate::game_plugin::actions::ActionsPlugin;
 use crate::game_plugin::audio::InternalAudioPlugin;
@@ -13,8 +13,8 @@ use crate::game_plugin::enemy::EnemyPlugin;
 use crate::game_plugin::loading::LoadingPlugin;
 use crate::game_plugin::menu::MenuPlugin;
 use crate::game_plugin::player::PlayerPlugin;
-use crate::game_plugin::player_text_input::PlayerTextInputPlugin;
 use crate::game_plugin::seconds_timer::SecondsTimerPlugin;
+use crate::game_plugin::tray::TrayPlugin;
 use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::prelude::*;
@@ -53,7 +53,7 @@ impl Plugin for GamePlugin {
             .add_plugin(InternalAudioPlugin)
             .add_plugin(PlayerPlugin)
             .add_plugin(EnemyPlugin)
-            .add_plugin(PlayerTextInputPlugin)
+            .add_plugin(TrayPlugin)
             .add_plugin(SecondsTimerPlugin)
             //.add_plugin(WorldInspectorPlugin::new())
             .add_system(bevy::input::system::exit_on_esc_system);

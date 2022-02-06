@@ -2,27 +2,24 @@ use crate::game_plugin::actions::KeyActions;
 use crate::game_plugin::SystemLabels;
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 
-pub struct PlayerTextInputPlugin;
+pub struct TrayPlugin;
 
 #[derive(Component)]
-struct FpsText;
+struct Tray;
 
-#[derive(Component)]
-struct ColorText;
-
-impl Plugin for PlayerTextInputPlugin {
+impl Plugin for TrayPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(FrameTimeDiagnosticsPlugin::default())
-            .add_startup_system(setup)
+            .add_startup_system(setup_tray)
             .add_system(
-                text_update_system
+                tray_update
                     .before(SystemLabels::EvaluateInput)
                     .after(SystemLabels::GatherInput),
             );
     }
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_tray(mut commands: Commands, asset_server: Res<AssetServer>) {
     // UI camera
     commands.spawn_bundle(UiCameraBundle::default());
 
@@ -74,10 +71,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             ..Default::default()
         })
-        .insert(FpsText);
+        .insert(Tray);
 }
 
-fn text_update_system(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With<FpsText>>) {
+fn tray_update(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With<Tray>>) {
     for mut text in query.iter_mut() {
         let stack = key_actions.char_stack.clone();
         let split_index = if let Some(word) = &key_actions.longest_word_option {
