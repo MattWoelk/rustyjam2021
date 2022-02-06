@@ -17,7 +17,7 @@ pub struct EnemyPlugin;
 
 #[derive(Component)]
 pub struct Enemy {
-    pub(crate) letter: char,
+    pub letter: char,
 }
 
 #[derive(Component)]
@@ -211,15 +211,17 @@ fn move_enemy(
 fn check_lose(
     mut state: ResMut<State<GameState>>,
     key_actions: ResMut<KeyActions>,
-    enemies: Query<&Transform, With<Enemy>>,
+    mut enemies: Query<(&Transform, &mut Text), With<Enemy>>,
 ) {
-    for enemy_transform in enemies.iter() {
+    for (enemy_transform, mut text) in enemies.iter_mut() {
         // TODO: this logic might not be very precise, if font size changes, etc.
         if enemy_transform.translation.y < -KILL_LINE_Y {
             state.set(GameState::PlayingLose).unwrap();
+            text.sections[0].style.color = Color::RED;
         }
     }
 
+    // TODO: magic number
     if key_actions.char_stack.clone().len() > 10 {
         state.set(GameState::PlayingLose).unwrap();
     }

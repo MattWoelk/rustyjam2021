@@ -44,6 +44,7 @@ fn setup_tray(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 sections: vec![
                     TextSection {
+                        // Non-potential word letters
                         value: "".to_string(),
                         style: TextStyle {
                             font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
@@ -52,6 +53,7 @@ fn setup_tray(mut commands: Commands, asset_server: Res<AssetServer>) {
                         },
                     },
                     TextSection {
+                        // Potential Word
                         value: "".to_string(),
                         style: TextStyle {
                             font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
@@ -60,11 +62,21 @@ fn setup_tray(mut commands: Commands, asset_server: Res<AssetServer>) {
                         },
                     },
                     TextSection {
+                        // Underlines
                         value: "__________".to_string(),
                         style: TextStyle {
                             font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
                             font_size: 120.0,
                             color: Color::GRAY,
+                        },
+                    },
+                    TextSection {
+                        // Overflow section
+                        value: "".to_string(),
+                        style: TextStyle {
+                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
+                            font_size: 120.0,
+                            color: Color::RED,
                         },
                     },
                 ],
@@ -77,11 +89,17 @@ fn setup_tray(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn tray_update(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With<Tray>>) {
     for mut text in query.iter_mut() {
         let stack = key_actions.char_stack.clone();
-        let split_index = if let Some(word) = &key_actions.longest_word_option {
+        let mut split_index = if let Some(word) = &key_actions.longest_word_option {
             stack.len() - word.len()
         } else {
             stack.len()
         };
+
+        // Don't show any as yellow if we are overflowed
+        // TODO: 10 should not be a magic number. (https://crates.io/crates/bevy_asset_ron)
+        if stack.len() > 10 {
+            split_index = 10;
+        }
 
         // TODO: 10 should not be a magic number.
         let stack_length = stack.len().min(10);
@@ -91,11 +109,22 @@ fn tray_update(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With
             .collect::<String>()
             .to_string()
             .to_uppercase();
-        text.sections[1].value = stack[split_index..]
+        text.sections[1].value = stack[split_index..stack_length]
             .iter()
             .collect::<String>()
             .to_string()
             .to_uppercase();
+        // TODO: 10 should not be a magic number.
         text.sections[2].value = "_".repeat(10 - stack_length);
+
+        // TODO: 10 should not be a magic number.
+        if stack.len() > 10 {
+            // TODO: 10 should not be a magic number.
+            text.sections[3].value = stack[10..]
+                .iter()
+                .collect::<String>()
+                .to_string()
+                .to_uppercase();
+        }
     }
 }
