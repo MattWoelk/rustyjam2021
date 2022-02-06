@@ -55,7 +55,7 @@ fn update_timer(
         for (mut text, mut timer, _) in query.iter_mut() {
             timer.tick(time.delta());
             let total = timer.elapsed_secs() + timer.times_finished() as f32;
-            text.sections[0].value = format!("{:.2} seconds", total);
+            text.sections[0].value = format!("{total:.2} seconds");
         }
     }
 }

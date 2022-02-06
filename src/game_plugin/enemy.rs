@@ -123,7 +123,7 @@ fn enemy_spawner(
                         horizontal: HorizontalAlign::Center,
                     },
                     sections: vec![TextSection {
-                        value: letter.to_string(),
+                        value: format!("{}", letter.to_uppercase()),
                         style: TextStyle {
                             font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
                             font_size: 120.0,
@@ -140,13 +140,13 @@ fn enemy_spawner(
 
 fn move_enemy(
     time: Res<Time>,
-    mut movement_query: Query<(&mut Transform, &mut Style), With<Enemy>>,
+    mut movement_query: Query<&mut Style, With<Enemy>>,
     mut sprite_query: Query<(&mut Timer, &mut TextureAtlasSprite)>,
 ) {
-    for (mut transform, mut style) in movement_query.iter_mut() {
-        transform.translation += Vec3::new(0., -3., 0.);
-        style.position.bottom += -1.;
-        style.position.left += -0.;
+    let fall_speed = 30.0;
+
+    for mut style in movement_query.iter_mut() {
+        style.position.bottom += -fall_speed * time.delta_seconds();
     }
 
     // rapidly swap its texture, like it's an animation or something.
