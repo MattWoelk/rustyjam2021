@@ -96,7 +96,9 @@ fn tray_update(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With
         };
 
         // Don't show any as yellow if we are overflowed
-        // TODO: 10 should not be a magic number. (https://crates.io/crates/bevy_asset_ron)
+        // TODO: 10 should not be a magic number.
+        //       https://crates.io/crates/bevy_asset_ron
+        //       https://github.com/bevyengine/bevy/blob/main/examples/asset/hot_asset_reloading.rs
         if stack.len() > 10 {
             split_index = 10;
         }

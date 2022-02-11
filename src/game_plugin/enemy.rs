@@ -51,11 +51,12 @@ impl Plugin for EnemyPlugin {
 
 /// move and shrink the particles, and remove them when they're too small
 fn update_enemy_death_particles(
+    time: Res<Time>,
     mut commands: Commands,
     mut query: Query<(Entity, &mut Transform, &EnemyDeathParticle)>,
 ) {
     for (entity, mut transform, particle) in query.iter_mut() {
-        transform.translation += particle.velocity;
+        transform.translation += particle.velocity * time.delta_seconds();
         transform.scale *= 0.9f32;
 
         if transform.scale.x < 0.1 {

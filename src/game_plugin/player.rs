@@ -69,12 +69,12 @@ fn shoot_enemies_with_keypresses(
         let mut rng = thread_rng();
         for _ in 0..10 {
             let angle: f32 = rng.gen_range(0.0..TAU);
-            let magnitude: f32 = rng.gen_range(1.0..10.0);
+            let magnitude: f32 = rng.gen_range(60.0..600.0);
 
             let velocity = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.);
 
             let location: Vec3 = transform.translation - screen_to_shape;
-            let location = location + (velocity * 4.);
+            let location = location + (velocity / 15.);
 
             commands
                 .spawn_bundle(GeometryBuilder::build_as(
