@@ -61,32 +61,11 @@ fn shoot_enemies_with_keypresses(
     if let Some((lowest_enemy, transform)) = lowest_enemy {
         commands.entity(lowest_enemy).despawn();
 
-        let shape = shapes::Rectangle {
-            extents: Vec2::new(20., 20.),
-            origin: RectangleOrigin::Center,
-        };
-
-        let mut rng = thread_rng();
-        for _ in 0..10 {
-            let angle: f32 = rng.gen_range(0.0..TAU);
-            let magnitude: f32 = rng.gen_range(60.0..600.0);
-
-            let velocity = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.);
-
-            let location: Vec3 = transform.translation - screen_to_shape;
-            let location = location + (velocity / 15.);
-
-            commands
-                .spawn_bundle(GeometryBuilder::build_as(
-                    &shape,
-                    DrawMode::Fill(FillMode {
-                        options: Default::default(),
-                        color: Default::default(),
-                    }),
-                    Transform::from_translation(location),
-                ))
-                .insert(EnemyDeathParticle { velocity });
-        }
+        spawn_particle_burst(
+            &mut commands,
+            &(transform.translation - screen_to_shape),
+            Color::WHITE,
+        );
     }
 
     let found_word = &key_actions.longest_word_option;
@@ -96,9 +75,10 @@ fn shoot_enemies_with_keypresses(
         if let Some(word) = found_word {
             let number_of_letters = word.len();
             let stack_len = key_actions.char_stack.len();
-            key_actions
-                .char_stack
-                .truncate(stack_len - number_of_letters);
+            let num_chars_to_keep = stack_len - number_of_letters;
+            key_actions.char_stack.truncate(num_chars_to_keep);
+
+            spawn_word_removal_particles(&mut commands, num_chars_to_keep, number_of_letters);
         }
     }
 
@@ -107,4 +87,46 @@ fn shoot_enemies_with_keypresses(
 
     // TODO: idea: it's always checking the last thing you typed, and it clears those letters if they spell a word
     //             your goal is to get rid of your whole stack, which gives you a boost of some sort.
+}
+
+fn spawn_word_removal_particles(
+    commands: &mut Commands,
+    stack_length: usize,
+    chars_removed: usize,
+) {
+    let y = -SCREEN_HEIGHT / 2. + 75.;
+    let half_letter = 30.0;
+    for n in 0..chars_removed {
+        let x = -SCREEN_WIDTH / 2. + half_letter + (stack_length + n) as f32 * half_letter * 2.;
+        let location: Vec3 = Vec3::new(x, y, 0.);
+        spawn_particle_burst(commands, &location, Color::YELLOW);
+    }
+}
+
+fn spawn_particle_burst(commands: &mut Commands, location: &Vec3, color: Color) {
+    let shape = shapes::Rectangle {
+        extents: Vec2::new(20., 20.),
+        origin: RectangleOrigin::Center,
+    };
+
+    let mut rng = thread_rng();
+    for _ in 0..10 {
+        let angle: f32 = rng.gen_range(0.0..TAU);
+        let magnitude: f32 = rng.gen_range(60.0..600.0);
+
+        let velocity = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.);
+
+        let location = location.clone() + (velocity / 15.);
+
+        commands
+            .spawn_bundle(GeometryBuilder::build_as(
+                &shape,
+                DrawMode::Fill(FillMode {
+                    options: Default::default(),
+                    color: color,
+                }),
+                Transform::from_translation(location),
+            ))
+            .insert(EnemyDeathParticle { velocity });
+    }
 }
