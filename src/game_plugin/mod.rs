@@ -30,9 +30,28 @@ enum GameState {
     // During this State the actual game logic is executed
     Playing,
     // A lose condition has been hit
-    PlayingLose,
+    PlayingLose, // TODO: this should be part of PlayState, if that works well.
     // Here the menu is drawn and waiting for player interaction
     Menu,
+}
+
+#[allow(unused)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+enum PlayState {
+    /// Normal play
+    Running,
+    /// when the boss battle stats
+    BossBattle,
+    /// juicy pauses when significant things happen (push and pop this)
+    HitPaused,
+    /// When a round is over
+    Finished,
+}
+
+#[derive(Clone, PartialEq, Debug)]
+struct PlayInfo {
+    state: PlayState,
+    hit_pause_timer: f32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, SystemLabel)]
@@ -47,6 +66,11 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_state(GameState::Loading)
+            .add_stage_after(CoreStage::Update, "resolve", SystemStage::single_threaded())
+            .insert_resource(PlayInfo {
+                state: PlayState::Running,
+                hit_pause_timer: 0.,
+            })
             .add_plugin(LoadingPlugin)
             .add_plugin(MenuPlugin)
             .add_plugin(ActionsPlugin)

@@ -1,5 +1,6 @@
 use crate::game_plugin::loading::TextureAssets;
 use crate::game_plugin::GameState;
+use crate::TRAY_SIZE;
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
@@ -8,6 +9,9 @@ use crate::game_plugin::SystemLabels::MoveEnemies;
 use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
 use rand::{thread_rng, Rng};
+
+use super::PlayInfo;
+use super::PlayState;
 
 const PHI: f32 = 1.61803; // The golden ratio
 const KILL_LINE_Y: f32 = -150.;
@@ -33,6 +37,16 @@ pub struct EnemySpawnTimer {
     time_since_last_spawn: f32,
     last_spawn_location: f32,
 }
+// TODO: keep track of time that is spend _not_ paused, for enemy spawning purposes
+
+//fn run_if_not_paused(play_info: Res<PlayInfo>) -> ShouldRun {
+//    match play_info.state {
+//        PlayState::BossBattle => ShouldRun::Yes,
+//        PlayState::Running => ShouldRun::Yes,
+//        PlayState::Finished => ShouldRun::No,
+//        PlayState::HitPaused => ShouldRun::No,
+//    }
+//}
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
@@ -40,12 +54,18 @@ impl Plugin for EnemyPlugin {
             .add_system_set(SystemSet::on_enter(GameState::Playing))
             .add_system_set(
                 SystemSet::on_update(GameState::Playing)
-                    .with_system(move_enemy.label(MoveEnemies))
-                    .with_system(enemy_spawner)
-                    .with_system(check_lose.after(MoveEnemies)),
+                    //SystemSet::on_update(PlayState::Running)
+                    .with_system(
+                        move_enemy
+                            //.with_run_criteria(run_if_not_paused)
+                            .label(MoveEnemies),
+                    )
+                    //.with_system(check_lose.after(MoveEnemies))
+                    .with_system(enemy_spawner), //.with_system(check_lose.after(MoveEnemies)),
             )
             .add_startup_system(startup_kill_line)
-            .add_system(update_enemy_death_particles);
+            .add_system(update_enemy_death_particles)
+            .add_system_to_stage("resolve", check_lose);
     }
 }
 
@@ -187,9 +207,16 @@ fn enemy_spawner(
 
 fn move_enemy(
     time: Res<Time>,
+    play_info: Res<PlayInfo>,
     mut movement_query: Query<&mut Style, With<Enemy>>,
     mut sprite_query: Query<(&mut Timer, &mut TextureAtlasSprite)>,
 ) {
+    match play_info.state {
+        PlayState::BossBattle => {}
+        PlayState::Running => {}
+        PlayState::Finished => return,
+        PlayState::HitPaused => return,
+    }
     for mut style in movement_query.iter_mut() {
         style.position.bottom += -ENEMY_FALL_SPEED * time.delta_seconds();
     }
@@ -216,14 +243,16 @@ fn check_lose(
 ) {
     for (enemy_transform, mut text) in enemies.iter_mut() {
         // TODO: this logic might not be very precise, if font size changes, etc.
-        if enemy_transform.translation.y < -KILL_LINE_Y {
+        // For some reason the enemy transform isn't getting set on the first frame, so we have to check for default here
+        if enemy_transform.translation.y < -KILL_LINE_Y
+            && enemy_transform.translation != Default::default()
+        {
             state.set(GameState::PlayingLose).unwrap();
             text.sections[0].style.color = Color::RED;
         }
     }
 
-    // TODO: magic number
-    if key_actions.char_stack.clone().len() > 10 {
+    if key_actions.char_stack.clone().len() > TRAY_SIZE {
         state.set(GameState::PlayingLose).unwrap();
     }
 }

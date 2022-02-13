@@ -2,11 +2,13 @@ use crate::game_plugin::actions::KeyActions;
 use crate::game_plugin::enemy::{Enemy, EnemyDeathParticle};
 use crate::game_plugin::GameState;
 use crate::game_plugin::SystemLabels::{EvaluateInput, GatherInput};
-use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::{SCREEN_HEIGHT, SCREEN_WIDTH, TRAY_SIZE};
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use rand::{thread_rng, Rng};
 use std::f32::consts::TAU;
+
+//use super::{PlayInfo, PlayState};
 
 pub struct PlayerPlugin;
 
@@ -23,7 +25,8 @@ impl Plugin for PlayerPlugin {
                         .after(GatherInput)
                         .label(EvaluateInput),
                 ),
-            );
+            )
+            .add_system_to_stage("resolve", check_completed_word);
     }
 }
 
@@ -33,7 +36,7 @@ fn spawn_camera(mut commands: Commands) {
 
 fn shoot_enemies_with_keypresses(
     mut commands: Commands,
-    mut key_actions: ResMut<KeyActions>,
+    key_actions: ResMut<KeyActions>,
     mut enemies: Query<(Entity, &Transform, &mut Enemy)>,
 ) {
     // subtract this to go from screen/bevy space to shape space
@@ -67,11 +70,16 @@ fn shoot_enemies_with_keypresses(
             Color::WHITE,
         );
     }
+}
 
-    let found_word = &key_actions.longest_word_option;
-
-    // TODO: should this be its own system? Probably.
+fn check_completed_word(
+    mut commands: Commands,
+    mut key_actions: ResMut<KeyActions>,
+    //mut play_info: ResMut<PlayInfo>,
+) {
     if key_actions.space_pressed {
+        let found_word = &key_actions.longest_word_option;
+
         if let Some(word) = found_word {
             let number_of_letters = word.len();
             let stack_len = key_actions.char_stack.len();
@@ -79,14 +87,11 @@ fn shoot_enemies_with_keypresses(
             key_actions.char_stack.truncate(num_chars_to_keep);
 
             spawn_word_removal_particles(&mut commands, num_chars_to_keep, number_of_letters);
+
+            // TODO: hit pause: pop that state, and unpop after 0.5s
+            //play_info.state = PlayState::HitPaused;
         }
     }
-
-    // TODO: see if we spelt a word, and make a thing happen in that case? but that won't all happen in the same frame, so we need to keep track ...
-    //       and we'll need to show on screen what was typed and in what order, so people can see if there's a word there.
-
-    // TODO: idea: it's always checking the last thing you typed, and it clears those letters if they spell a word
-    //             your goal is to get rid of your whole stack, which gives you a boost of some sort.
 }
 
 fn spawn_word_removal_particles(
@@ -110,7 +115,7 @@ fn spawn_particle_burst(commands: &mut Commands, location: &Vec3, color: Color) 
     };
 
     let mut rng = thread_rng();
-    for _ in 0..10 {
+    for _ in 0..TRAY_SIZE {
         let angle: f32 = rng.gen_range(0.0..TAU);
         let magnitude: f32 = rng.gen_range(60.0..600.0);
 

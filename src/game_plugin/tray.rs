@@ -1,5 +1,5 @@
-use crate::game_plugin::actions::KeyActions;
 use crate::game_plugin::SystemLabels;
+use crate::{game_plugin::actions::KeyActions, TRAY_SIZE};
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 
 pub struct TrayPlugin;
@@ -104,7 +104,7 @@ fn tray_update(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With
         }
 
         // TODO: 10 should not be a magic number.
-        let stack_length = stack.len().min(10);
+        let stack_length = stack.len().min(TRAY_SIZE);
 
         text.sections[0].value = stack[0..split_index]
             .iter()
@@ -117,12 +117,12 @@ fn tray_update(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With
             .to_string()
             .to_uppercase();
         // TODO: 10 should not be a magic number.
-        text.sections[2].value = "_".repeat(10 - stack_length);
+        text.sections[2].value = "_".repeat(TRAY_SIZE - stack_length);
 
         // TODO: 10 should not be a magic number.
-        if stack.len() > 10 {
+        if stack.len() > TRAY_SIZE {
             // TODO: 10 should not be a magic number.
-            text.sections[3].value = stack[10..]
+            text.sections[3].value = stack[TRAY_SIZE..]
                 .iter()
                 .collect::<String>()
                 .to_string()

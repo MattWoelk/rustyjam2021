@@ -3,6 +3,7 @@
 
 mod game_plugin;
 
+//use bevy::log::LogPlugin;
 use bevy::prelude::{App, ClearColor, Color, WindowDescriptor};
 use bevy::DefaultPlugins;
 use game_plugin::GamePlugin;
@@ -11,6 +12,7 @@ use bevy_prototype_lyon::prelude::*;
 
 pub const SCREEN_WIDTH: f32 = 960.;
 pub const SCREEN_HEIGHT: f32 = 540.;
+pub const TRAY_SIZE: usize = 10;
 
 fn main() {
     let mut app = App::new();
@@ -24,8 +26,12 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        //.add_plugins_with(DefaultPlugins, |plugins| plugins.disable::<LogPlugin>())
         .add_plugin(ShapePlugin)
         .add_plugin(GamePlugin);
+
+    //bevy_mod_debugdump::print_schedule(&mut app);
+    //bevy_mod_debugdump::print_render_graph(&mut app);
 
     app.run();
 }
