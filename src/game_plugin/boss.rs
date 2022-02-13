@@ -1,9 +1,13 @@
 use bevy::prelude::*;
+use bevy_prototype_lyon::prelude::*;
 use rand::{thread_rng, Rng};
 
 use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
 use super::{enemy::Enemy, GameState};
+
+const BOSS_LETTER_FONT_SIZE: f32 = 60.0;
+
 pub struct BossPlugin;
 
 impl Plugin for BossPlugin {
@@ -32,8 +36,20 @@ struct BossLetter {
 }
 
 fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let boss_body_shape = shapes::Circle {
+        radius: 100.,
+        center: Default::default(),
+    };
     commands
-        .spawn()
+        //.spawn()
+        .spawn_bundle(GeometryBuilder::build_as(
+            &boss_body_shape,
+            DrawMode::Fill(FillMode {
+                options: Default::default(),
+                color: Color::DARK_GRAY,
+            }),
+            Transform::default(),
+        ))
         .insert(Boss {
             velocity: Vec3::default(),
         })
@@ -88,7 +104,7 @@ fn spawn_boss_letter(
                     value: letter.to_string(),
                     style: TextStyle {
                         font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
-                        font_size: 60.0,
+                        font_size: BOSS_LETTER_FONT_SIZE,
                         color: Color::WHITE,
                     },
                 }],
@@ -110,7 +126,11 @@ fn boss_letter_swarm(
     boss: Query<&Transform, With<Boss>>,
 ) {
     // subtract this to go from screen/bevy space to shape space
-    let screen_to_shape: Vec3 = Vec3::new(SCREEN_WIDTH / 2., SCREEN_HEIGHT / 2., 0.);
+    let screen_to_shape: Vec3 = Vec3::new(
+        SCREEN_WIDTH / 2.,
+        SCREEN_HEIGHT / 2. - (BOSS_LETTER_FONT_SIZE / 2.),
+        0.,
+    );
     let mut rng = thread_rng();
 
     if let Ok(boss_transform) = boss.get_single() {
