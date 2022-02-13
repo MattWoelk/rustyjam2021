@@ -1,5 +1,6 @@
 mod actions;
 mod audio;
+mod boss;
 mod enemy;
 mod loading;
 mod menu;
@@ -18,6 +19,8 @@ use crate::game_plugin::tray::TrayPlugin;
 use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::prelude::*;
+
+use self::boss::BossPlugin;
 //use bevy_inspector_egui::WorldInspectorPlugin;
 
 // This example game uses States to separate logic
@@ -83,6 +86,7 @@ impl Plugin for GamePlugin {
             .add_plugin(ActionsPlugin)
             .add_plugin(InternalAudioPlugin)
             .add_plugin(PlayerPlugin)
+            .add_plugin(BossPlugin)
             .add_plugin(EnemyPlugin)
             .add_plugin(TrayPlugin)
             .add_plugin(SecondsTimerPlugin)

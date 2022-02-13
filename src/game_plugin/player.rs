@@ -26,11 +26,6 @@ impl Plugin for PlayerPlugin {
                         .label(EvaluateInput),
                 ),
             )
-            .add_system_set(
-                SystemSet::on_enter(GameState::Boss)
-                    .with_system(destroy_all_enemies)
-                    .with_system(spawn_boss),
-            )
             .add_system_to_stage("resolve", check_completed_word);
     }
 }
@@ -139,47 +134,4 @@ fn spawn_particle_burst(commands: &mut Commands, location: &Vec3, color: Color) 
             ))
             .insert(EnemyDeathParticle { velocity });
     }
-}
-
-// TODO: move all this boss stuff somewhere else
-
-fn destroy_all_enemies(mut commands: Commands, enemies: Query<Entity, With<Enemy>>) {
-    for entity in enemies.iter() {
-        commands.entity(entity).despawn();
-    }
-}
-
-#[derive(Component)]
-pub struct Boss {}
-
-fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn()
-        .insert_bundle(TextBundle {
-            style: Style {
-                position_type: PositionType::Absolute,
-                position: Rect {
-                    left: Val::Px(SCREEN_WIDTH * 0.5),
-                    bottom: Val::Px(SCREEN_HEIGHT * 3. / 4.),
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-            text: Text {
-                alignment: TextAlignment {
-                    vertical: VerticalAlign::Center,
-                    horizontal: HorizontalAlign::Center,
-                },
-                sections: vec![TextSection {
-                    value: "a".to_string(),
-                    style: TextStyle {
-                        font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
-                        font_size: 120.0,
-                        color: Color::WHITE,
-                    },
-                }],
-            },
-            ..Default::default()
-        })
-        .insert(Boss {});
 }
