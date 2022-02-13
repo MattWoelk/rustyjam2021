@@ -25,13 +25,19 @@ use bevy::prelude::*;
 // Or https://github.com/bevyengine/bevy/blob/main/examples/ecs/state.rs
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
 enum GameState {
-    // During the loading State the LoadingPlugin will load our assets
+    /// During the loading State the LoadingPlugin will load our assets
     Loading,
-    // During this State the actual game logic is executed
+
+    /// During this State the actual game logic is executed
     Playing,
-    // A lose condition has been hit
+
+    /// Boss Fight! (overlay this on top of "Playing", using push and pop)
+    Boss,
+
+    /// A lose condition has been hit (overlay this on top of "Playing", using push and pop)
     PlayingLose, // TODO: this should be part of PlayState, if that works well.
-    // Here the menu is drawn and waiting for player interaction
+
+    /// Here the menu is drawn and waiting for player interaction
     Menu,
 }
 
@@ -66,6 +72,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_state(GameState::Loading)
+            //.add_state(PlayState::Running)
             .add_stage_after(CoreStage::Update, "resolve", SystemStage::single_threaded())
             .insert_resource(PlayInfo {
                 state: PlayState::Running,

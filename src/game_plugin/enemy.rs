@@ -1,5 +1,6 @@
-use crate::game_plugin::loading::TextureAssets;
 use crate::game_plugin::GameState;
+use crate::SCREEN_HEIGHT;
+use crate::SCREEN_WIDTH;
 use crate::TRAY_SIZE;
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
@@ -105,16 +106,10 @@ fn startup_kill_line(mut commands: Commands) {
 
 fn enemy_spawner(
     time: Res<Time>,
-    textures: Res<TextureAssets>,
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-    let texture_handle = textures.texture_tileset.clone();
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-
     let letter_weights = [
         ('a', 9),
         ('b', 2),
@@ -153,7 +148,6 @@ fn enemy_spawner(
 
     // keep track of how long it's been since spawning an enemy, then spawn a new one if it's past the threshold and reset the timer.
     if enemy_spawn_timer.time_since_last_spawn >= spawn_period {
-        let screen_dimensions = (960., 540.);
         let letter = letter_weights[dist.sample(&mut rng)].0;
 
         let screen_percent =
@@ -168,18 +162,12 @@ fn enemy_spawner(
 
         commands
             .spawn()
-            .insert_bundle(SpriteSheetBundle {
-                texture_atlas: texture_atlas_handle,
-                transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
-                sprite: TextureAtlasSprite::new(189),
-                ..Default::default()
-            })
             .insert_bundle(TextBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
                     position: Rect {
-                        left: Val::Px(screen_dimensions.0 * screen_percent),
-                        bottom: Val::Px(screen_dimensions.1 * 3. / 4.),
+                        left: Val::Px(SCREEN_WIDTH * screen_percent),
+                        bottom: Val::Px(SCREEN_HEIGHT * 3. / 4.),
                         ..Default::default()
                     },
                     ..Default::default()
@@ -200,7 +188,6 @@ fn enemy_spawner(
                 },
                 ..Default::default()
             })
-            .insert(Timer::from_seconds(0.1, true))
             .insert(Enemy { letter });
     }
 }
@@ -209,7 +196,6 @@ fn move_enemy(
     time: Res<Time>,
     play_info: Res<PlayInfo>,
     mut movement_query: Query<&mut Style, With<Enemy>>,
-    mut sprite_query: Query<(&mut Timer, &mut TextureAtlasSprite)>,
 ) {
     match play_info.state {
         PlayState::BossBattle => {}
@@ -220,20 +206,6 @@ fn move_enemy(
     for mut style in movement_query.iter_mut() {
         style.position.bottom += -ENEMY_FALL_SPEED * time.delta_seconds();
     }
-
-    // rapidly swap its texture, like it's an animation or something.
-    let anim_sprite_sheet_indices: [usize; 2] = [189, (189 - 24)];
-    for (mut timer, mut sprite) in sprite_query.iter_mut() {
-        timer.tick(time.delta());
-        if timer.finished() {
-            let current_index = anim_sprite_sheet_indices
-                .iter()
-                .position(|&x| x == sprite.index)
-                .unwrap();
-            sprite.index =
-                anim_sprite_sheet_indices[(current_index + 1) % anim_sprite_sheet_indices.len()];
-        }
-    }
 }
 
 fn check_lose(
@@ -241,18 +213,23 @@ fn check_lose(
     key_actions: ResMut<KeyActions>,
     mut enemies: Query<(&Transform, &mut Text), With<Enemy>>,
 ) {
+    if *state.current() == GameState::PlayingLose {
+        return;
+    }
+
     for (enemy_transform, mut text) in enemies.iter_mut() {
         // TODO: this logic might not be very precise, if font size changes, etc.
         // For some reason the enemy transform isn't getting set on the first frame, so we have to check for default here
         if enemy_transform.translation.y < -KILL_LINE_Y
             && enemy_transform.translation != Default::default()
         {
-            state.set(GameState::PlayingLose).unwrap();
+            state.push(GameState::PlayingLose).unwrap();
             text.sections[0].style.color = Color::RED;
+            return;
         }
     }
 
     if key_actions.char_stack.clone().len() > TRAY_SIZE {
-        state.set(GameState::PlayingLose).unwrap();
+        state.push(GameState::PlayingLose).unwrap();
     }
 }

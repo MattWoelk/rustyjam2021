@@ -10,11 +10,14 @@ pub struct ActionsPlugin;
 // Actions can then be used as a resource in other systems to act on the player input.
 impl Plugin for ActionsPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<KeyActions>().add_system_set(
-            SystemSet::on_update(GameState::Playing)
-                .label(GatherInput)
-                .with_system(set_keyboard_actions.label(GatherInput)),
-        );
+        app.init_resource::<KeyActions>()
+            .init_resource::<DebugKeyActions>()
+            .add_system_set(
+                SystemSet::on_update(GameState::Playing)
+                    .label(GatherInput)
+                    .with_system(set_keyboard_actions.label(GatherInput))
+                    .with_system(set_debug_keyboard_actions.label(GatherInput)),
+            );
     }
 }
 
@@ -116,4 +119,24 @@ fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<String> {
     }
 
     None
+}
+
+// TODO: put this debug stuff in its own file/system/whatever
+// TODO: disable this debug stuff when we're in --release
+
+#[derive(Default)]
+pub struct DebugKeyActions {
+    pub boss_fight_started: bool,
+}
+
+fn set_debug_keyboard_actions(
+    mut debug_action: ResMut<DebugKeyActions>,
+    keyboard_input: Res<Input<KeyCode>>,
+    mut state: ResMut<State<GameState>>,
+) {
+    debug_action.boss_fight_started = keyboard_input.just_pressed(KeyCode::F1);
+
+    if debug_action.boss_fight_started {
+        state.push(GameState::Boss).unwrap();
+    }
 }

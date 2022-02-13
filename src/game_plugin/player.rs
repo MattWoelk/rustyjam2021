@@ -26,6 +26,11 @@ impl Plugin for PlayerPlugin {
                         .label(EvaluateInput),
                 ),
             )
+            .add_system_set(
+                SystemSet::on_enter(GameState::Boss)
+                    .with_system(destroy_all_enemies)
+                    .with_system(spawn_boss),
+            )
             .add_system_to_stage("resolve", check_completed_word);
     }
 }
@@ -37,7 +42,7 @@ fn spawn_camera(mut commands: Commands) {
 fn shoot_enemies_with_keypresses(
     mut commands: Commands,
     key_actions: ResMut<KeyActions>,
-    mut enemies: Query<(Entity, &Transform, &mut Enemy)>,
+    enemies: Query<(Entity, &Transform, &Enemy)>,
 ) {
     // subtract this to go from screen/bevy space to shape space
     let screen_to_shape: Vec3 = Vec3::new(SCREEN_WIDTH / 2., SCREEN_HEIGHT / 2., 0.);
@@ -47,7 +52,7 @@ fn shoot_enemies_with_keypresses(
 
     let mut lowest_enemy: Option<(Entity, &Transform)> = None;
 
-    for (entity, transform, enemy) in enemies.iter_mut() {
+    for (entity, transform, enemy) in enemies.iter() {
         if keys_pressed.contains(&enemy.letter) {
             lowest_enemy = if let Some((_, old_transform)) = lowest_enemy {
                 if old_transform.translation.y > transform.translation.y {
@@ -121,17 +126,60 @@ fn spawn_particle_burst(commands: &mut Commands, location: &Vec3, color: Color) 
 
         let velocity = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.);
 
-        let location = location.clone() + (velocity / 15.);
+        let location = *location + (velocity / 15.);
 
         commands
             .spawn_bundle(GeometryBuilder::build_as(
                 &shape,
                 DrawMode::Fill(FillMode {
                     options: Default::default(),
-                    color: color,
+                    color,
                 }),
                 Transform::from_translation(location),
             ))
             .insert(EnemyDeathParticle { velocity });
     }
+}
+
+// TODO: move all this boss stuff somewhere else
+
+fn destroy_all_enemies(mut commands: Commands, enemies: Query<Entity, With<Enemy>>) {
+    for entity in enemies.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
+#[derive(Component)]
+pub struct Boss {}
+
+fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        .spawn()
+        .insert_bundle(TextBundle {
+            style: Style {
+                position_type: PositionType::Absolute,
+                position: Rect {
+                    left: Val::Px(SCREEN_WIDTH * 0.5),
+                    bottom: Val::Px(SCREEN_HEIGHT * 3. / 4.),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            text: Text {
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Center,
+                    horizontal: HorizontalAlign::Center,
+                },
+                sections: vec![TextSection {
+                    value: "a".to_string(),
+                    style: TextStyle {
+                        font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
+                        font_size: 120.0,
+                        color: Color::WHITE,
+                    },
+                }],
+            },
+            ..Default::default()
+        })
+        .insert(Boss {});
 }
