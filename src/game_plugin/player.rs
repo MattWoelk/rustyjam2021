@@ -78,7 +78,7 @@ fn check_completed_word(
     //mut play_info: ResMut<PlayInfo>,
 ) {
     if key_actions.space_pressed {
-        let found_word = &key_actions.longest_word_option;
+        let found_word = &key_actions.longest_word_option.clone();
 
         if let Some(word) = found_word {
             let number_of_letters = word.len();
@@ -87,6 +87,8 @@ fn check_completed_word(
             key_actions.char_stack.truncate(num_chars_to_keep);
 
             spawn_word_removal_particles(&mut commands, num_chars_to_keep, number_of_letters);
+
+            key_actions.all_collected_words.push(word.to_string());
 
             // TODO: hit pause: pop that state, and unpop after 0.5s
             //play_info.state = PlayState::HitPaused;

@@ -4,7 +4,7 @@ use rand::{thread_rng, Rng};
 
 use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
-use super::{enemy::Enemy, GameState};
+use super::{actions::KeyActions, enemy::Enemy, GameState, PHI};
 
 const BOSS_LETTER_FONT_SIZE: f32 = 60.0;
 
@@ -15,6 +15,7 @@ impl Plugin for BossPlugin {
         app.add_system_set(
             SystemSet::on_enter(GameState::Boss)
                 .with_system(destroy_all_enemies)
+                .with_system(spawn_words_on_the_ground)
                 .with_system(spawn_boss),
         )
         .add_system_set(
@@ -33,6 +34,11 @@ pub struct Boss {
 #[derive(Component)]
 struct BossLetter {
     velocity: Vec3,
+}
+
+#[derive(Component)]
+struct BossFloorWord {
+    word: String,
 }
 
 fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -188,5 +194,70 @@ fn boss_movement(time: Res<Time>, mut boss: Query<(&mut Transform, &mut Boss)>) 
     }
     if transform.translation.y > SCREEN_HEIGHT / 2. {
         boss.velocity.y = f32::abs(boss.velocity.y) * -0.8;
+    }
+}
+
+fn spawn_words_on_the_ground(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    key_actions: Res<KeyActions>,
+) {
+    let mut words = &key_actions.all_collected_words;
+
+    // TODO: have this only work in debug mode.
+    let backup_words = vec![
+        "one".to_string(),
+        "two".to_string(),
+        "three".to_string(),
+        "four".to_string(),
+        "five".to_string(),
+        "six".to_string(),
+        "□".to_string(),
+    ];
+
+    if words.is_empty() {
+        words = &backup_words;
+    }
+
+    let mut rng = thread_rng();
+
+    for word in words {
+        let x = rng.gen_range(0.0..1.0);
+        let y = rng.gen_range(0.0..1.0);
+
+        let left = SCREEN_WIDTH * x;
+        let bottom = SCREEN_HEIGHT * y;
+
+        commands
+            .spawn()
+            .insert_bundle(TextBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    position: Rect {
+                        left: Val::Px(left),
+                        bottom: Val::Px(bottom),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                text: Text {
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Center,
+                        horizontal: HorizontalAlign::Center,
+                    },
+                    sections: vec![TextSection {
+                        value: word.to_string().to_uppercase(),
+                        style: TextStyle {
+                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
+                            font_size: 60.,
+                            color: Color::WHITE,
+                        },
+                    }],
+                },
+                ..Default::default()
+            })
+            .insert(BossFloorWord {
+                word: word.to_string(),
+            });
     }
 }

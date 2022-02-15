@@ -13,8 +13,8 @@ use rand::{thread_rng, Rng};
 
 use super::PlayInfo;
 use super::PlayState;
+use super::PHI;
 
-const PHI: f32 = 1.61803; // The golden ratio
 const KILL_LINE_Y: f32 = -150.;
 const ENEMY_FALL_SPEED: f32 = 20.0;
 

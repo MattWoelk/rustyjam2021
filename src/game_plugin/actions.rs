@@ -28,6 +28,7 @@ pub struct KeyActions {
     pub space_pressed: bool,
     pub all_words: HashSet<String>,
     pub longest_word_option: Option<String>,
+    pub all_collected_words: Vec<String>,
 }
 
 impl Default for KeyActions {
@@ -44,6 +45,7 @@ impl Default for KeyActions {
             space_pressed: false,
             all_words,
             longest_word_option: None,
+            all_collected_words: vec![],
         }
     }
 }
