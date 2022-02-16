@@ -1,10 +1,11 @@
+use crate::game_plugin::SystemLabels::GatherInput;
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use rand::{thread_rng, Rng};
 
 use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
-use super::{actions::KeyActions, enemy::Enemy, GameState, PHI};
+use super::{actions::KeyActions, enemy::Enemy, GameState};
 
 const BOSS_LETTER_FONT_SIZE: f32 = 60.0;
 
@@ -15,12 +16,15 @@ impl Plugin for BossPlugin {
         app.add_system_set(
             SystemSet::on_enter(GameState::Boss)
                 .with_system(destroy_all_enemies)
+                .with_system(reset_stack)
                 .with_system(spawn_words_on_the_ground)
                 .with_system(spawn_boss),
         )
         .add_system_set(
             SystemSet::on_update(GameState::Boss)
                 .with_system(boss_letter_swarm)
+                .with_system(set_keyboard_actions_boss_mode.label(GatherInput))
+                .with_system(update_floor_words.after(GatherInput))
                 .with_system(boss_movement),
         );
     }
@@ -120,6 +124,10 @@ fn spawn_boss_letter(
         .insert(BossLetter { velocity });
 }
 
+fn reset_stack(mut action: ResMut<KeyActions>) {
+    action.char_stack.clear();
+}
+
 fn destroy_all_enemies(mut commands: Commands, enemies: Query<Entity, With<Enemy>>) {
     for entity in enemies.iter() {
         commands.entity(entity).despawn();
@@ -203,6 +211,8 @@ fn spawn_words_on_the_ground(
     key_actions: Res<KeyActions>,
 ) {
     let mut words = &key_actions.all_collected_words;
+    // TODO: make sure there are no duplicates in the words.
+    // TODO: keep the longest X words
 
     // TODO: have this only work in debug mode.
     let backup_words = vec![
@@ -212,7 +222,7 @@ fn spawn_words_on_the_ground(
         "four".to_string(),
         "five".to_string(),
         "six".to_string(),
-        "□".to_string(),
+        "seven".to_string(),
     ];
 
     if words.is_empty() {
@@ -245,19 +255,112 @@ fn spawn_words_on_the_ground(
                         vertical: VerticalAlign::Center,
                         horizontal: HorizontalAlign::Center,
                     },
-                    sections: vec![TextSection {
-                        value: word.to_string().to_uppercase(),
-                        style: TextStyle {
-                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
-                            font_size: 60.,
-                            color: Color::WHITE,
+                    sections: vec![
+                        TextSection {
+                            value: ".".to_string().to_uppercase(),
+                            style: TextStyle {
+                                font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
+                                font_size: 60.,
+                                color: Color::YELLOW,
+                            },
                         },
-                    }],
+                        TextSection {
+                            value: word.to_string().to_uppercase(),
+                            style: TextStyle {
+                                font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
+                                font_size: 60.,
+                                color: Color::WHITE,
+                            },
+                        },
+                    ],
                 },
                 ..Default::default()
             })
             .insert(BossFloorWord {
                 word: word.to_string(),
             });
+    }
+}
+
+fn set_keyboard_actions_boss_mode(
+    mut action: ResMut<KeyActions>,
+    keyboard_input: Res<Input<KeyCode>>,
+    floor_words: Query<&BossFloorWord>,
+) {
+    let new_chars: Vec<char> = keyboard_input
+        .get_just_pressed()
+        .filter_map(|code: &bevy::prelude::KeyCode| match code {
+            KeyCode::A => Some('a'),
+            KeyCode::B => Some('b'),
+            KeyCode::C => Some('c'),
+            KeyCode::D => Some('d'),
+            KeyCode::E => Some('e'),
+            KeyCode::F => Some('f'),
+            KeyCode::G => Some('g'),
+            KeyCode::H => Some('h'),
+            KeyCode::I => Some('i'),
+            KeyCode::J => Some('j'),
+            KeyCode::K => Some('k'),
+            KeyCode::L => Some('l'),
+            KeyCode::M => Some('m'),
+            KeyCode::N => Some('n'),
+            KeyCode::O => Some('o'),
+            KeyCode::P => Some('p'),
+            KeyCode::Q => Some('q'),
+            KeyCode::R => Some('r'),
+            KeyCode::S => Some('s'),
+            KeyCode::T => Some('t'),
+            KeyCode::U => Some('u'),
+            KeyCode::V => Some('v'),
+            KeyCode::W => Some('w'),
+            KeyCode::X => Some('x'),
+            KeyCode::Y => Some('y'),
+            KeyCode::Z => Some('z'),
+            _ => None,
+        })
+        .collect();
+
+    // Backspace to undo typing
+    if keyboard_input.just_pressed(KeyCode::Back) {
+        action.char_stack.pop();
+    }
+
+    let mut potential_word: String = action.char_stack.clone().iter().collect();
+    potential_word += &mut new_chars.iter().collect::<String>();
+
+    // If we found a match, update the stack
+    if floor_words
+        .iter()
+        .any(|e| e.word.starts_with(&potential_word))
+    {
+        action.char_stack = potential_word.chars().collect();
+    }
+
+    action.new_press = !new_chars.is_empty();
+    action.keys_just_pressed = new_chars;
+    action.space_pressed = keyboard_input.just_pressed(KeyCode::Space);
+}
+
+fn update_floor_words(
+    action: Res<KeyActions>,
+    mut floor_words: Query<(&BossFloorWord, &mut Text)>,
+) {
+    let string_to_match = action.char_stack.iter().collect::<String>();
+
+    // Make letters yellow, and do things if you hit spacebar
+    for (floor_word, mut text) in floor_words.iter_mut() {
+        if floor_word.word.starts_with(&string_to_match) {
+            text.sections[0].value = string_to_match.clone();
+            text.sections[1].value = floor_word.word[string_to_match.len()..].to_string();
+        } else {
+            text.sections[0].value = "".to_string();
+            text.sections[1].value = floor_word.word.to_string();
+        }
+
+        if action.space_pressed && floor_word.word == string_to_match {
+            // TODO: reset action
+            // TODO: spawn bullets or whatever they are
+            todo!()
+        }
     }
 }
