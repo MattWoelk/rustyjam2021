@@ -25,7 +25,8 @@ impl Plugin for BossPlugin {
                 .with_system(boss_letter_swarm)
                 .with_system(set_keyboard_actions_boss_mode.label(GatherInput))
                 .with_system(update_floor_words.after(GatherInput))
-                .with_system(boss_movement),
+                .with_system(boss_movement)
+                .with_system(letter_bullet_movement),
         );
     }
 }
@@ -43,6 +44,16 @@ struct BossLetter {
 #[derive(Component)]
 struct BossFloorWord {
     word: String,
+}
+
+#[derive(Component)]
+struct LetterBullet {
+    velocity: Vec3,
+    mode: LetterBulletMode,
+}
+
+enum LetterBulletMode {
+    Straight,
 }
 
 fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -342,13 +353,17 @@ fn set_keyboard_actions_boss_mode(
 }
 
 fn update_floor_words(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
     action: Res<KeyActions>,
-    mut floor_words: Query<(&BossFloorWord, &mut Text)>,
+    mut floor_words: Query<(&BossFloorWord, &mut Text, &Transform)>,
 ) {
+    let screen_to_shape: Vec3 = Vec3::new(SCREEN_WIDTH / 2., SCREEN_HEIGHT / 2., 0.);
+
     let string_to_match = action.char_stack.iter().collect::<String>();
 
     // Make letters yellow, and do things if you hit spacebar
-    for (floor_word, mut text) in floor_words.iter_mut() {
+    for (floor_word, mut text, transform) in floor_words.iter_mut() {
         if floor_word.word.starts_with(&string_to_match) {
             text.sections[0].value = string_to_match.clone();
             text.sections[1].value = floor_word.word[string_to_match.len()..].to_string();
@@ -360,7 +375,56 @@ fn update_floor_words(
         if action.space_pressed && floor_word.word == string_to_match {
             // TODO: reset action
             // TODO: spawn bullets or whatever they are
-            todo!()
+
+            for c in floor_word.word.chars() {
+                dbg!(c);
+                match c {
+                    'i' => {
+                        commands
+                            .spawn()
+                            .insert_bundle(TextBundle {
+                                style: Style {
+                                    position_type: PositionType::Absolute,
+                                    position: Rect {
+                                        left: Val::Px(transform.translation.x), // - SCREEN_WIDTH * 0.5),
+                                        bottom: Val::Px(
+                                            transform.translation.y, // - SCREEN_HEIGHT * 0.5,
+                                        ),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                },
+                                text: Text {
+                                    alignment: TextAlignment {
+                                        vertical: VerticalAlign::Center,
+                                        horizontal: HorizontalAlign::Center,
+                                    },
+                                    sections: vec![TextSection {
+                                        value: c.to_string(),
+                                        style: TextStyle {
+                                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
+                                            font_size: BOSS_LETTER_FONT_SIZE,
+                                            color: Color::WHITE,
+                                        },
+                                    }],
+                                },
+                                ..Default::default()
+                            })
+                            .insert(LetterBullet {
+                                velocity: Vec3::new(12., 12., 0.),
+                                mode: LetterBulletMode::Straight,
+                            });
+                    }
+                    _ => {}
+                }
+            }
         }
+    }
+}
+
+fn letter_bullet_movement(time: Res<Time>, mut movement_query: Query<(&mut Style, &LetterBullet)>) {
+    for (mut style, letter) in movement_query.iter_mut() {
+        style.position.left += (letter.velocity * time.delta_seconds()).x;
+        style.position.bottom += (letter.velocity * time.delta_seconds()).y;
     }
 }
