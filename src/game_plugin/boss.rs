@@ -52,6 +52,7 @@ struct LetterBullet {
     mode: LetterBulletMode,
 }
 
+#[derive(Clone)]
 enum LetterBulletMode {
     Straight,
 }
@@ -374,49 +375,17 @@ fn update_floor_words(
 
         if action.space_pressed && floor_word.word == string_to_match {
             // TODO: reset action
-            // TODO: spawn bullets or whatever they are
+            // TODO: send in modifiers, if the word contains those certain letters
 
             for c in floor_word.word.chars() {
-                dbg!(c);
-                match c {
-                    'i' => {
-                        commands
-                            .spawn()
-                            .insert_bundle(TextBundle {
-                                style: Style {
-                                    position_type: PositionType::Absolute,
-                                    position: Rect {
-                                        left: Val::Px(transform.translation.x), // - SCREEN_WIDTH * 0.5),
-                                        bottom: Val::Px(
-                                            transform.translation.y, // - SCREEN_HEIGHT * 0.5,
-                                        ),
-                                        ..Default::default()
-                                    },
-                                    ..Default::default()
-                                },
-                                text: Text {
-                                    alignment: TextAlignment {
-                                        vertical: VerticalAlign::Center,
-                                        horizontal: HorizontalAlign::Center,
-                                    },
-                                    sections: vec![TextSection {
-                                        value: c.to_string(),
-                                        style: TextStyle {
-                                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
-                                            font_size: BOSS_LETTER_FONT_SIZE,
-                                            color: Color::WHITE,
-                                        },
-                                    }],
-                                },
-                                ..Default::default()
-                            })
-                            .insert(LetterBullet {
-                                velocity: Vec3::new(12., 12., 0.),
-                                mode: LetterBulletMode::Straight,
-                            });
-                    }
-                    _ => {}
-                }
+                spawn_floor_bullets(
+                    &mut commands,
+                    &asset_server,
+                    c,
+                    Vec3::new(12., 12., 0.),
+                    transform.translation.x,
+                    transform.translation.y,
+                );
             }
         }
     }
@@ -426,5 +395,98 @@ fn letter_bullet_movement(time: Res<Time>, mut movement_query: Query<(&mut Style
     for (mut style, letter) in movement_query.iter_mut() {
         style.position.left += (letter.velocity * time.delta_seconds()).x;
         style.position.bottom += (letter.velocity * time.delta_seconds()).y;
+    }
+}
+
+fn spawn_floor_bullets(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    letter: char,
+    velocity: Vec3,
+    offset_left: f32,
+    offset_bottom: f32,
+) {
+    let info = match letter_to_bullet_info(letter) {
+        Some(i) => i,
+        None => return,
+    };
+    let angles_and_positions = info.spread_style.random_angles_and_positions(info.quantity);
+
+    for (angle, position) in angles_and_positions {
+        commands
+            .spawn()
+            .insert_bundle(TextBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    position: Rect {
+                        left: Val::Px(/*SCREEN_WIDTH * 0.5 + */ offset_left + position.x),
+                        bottom: Val::Px(/*SCREEN_HEIGHT * 0.5 + */ offset_bottom + position.y),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                text: Text {
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Center,
+                        horizontal: HorizontalAlign::Center,
+                    },
+                    sections: vec![TextSection {
+                        value: letter.to_string(),
+                        style: TextStyle {
+                            font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
+                            font_size: BOSS_LETTER_FONT_SIZE,
+                            color: Color::WHITE,
+                        },
+                    }],
+                },
+                ..Default::default()
+            })
+            .insert(LetterBullet {
+                velocity,
+                mode: info.bullet_mode.clone(),
+            });
+    }
+}
+
+struct BulletInfo {
+    quantity: u32,
+    spread_style: SpreadStyle,
+    letter_display: char,
+    velocity: Vec3,
+    bullet_mode: LetterBulletMode,
+}
+
+enum SpreadStyle {
+    CIRCULAR,
+    X,
+}
+
+impl SpreadStyle {
+    fn random_angles_and_positions(&self, quantity: u32) -> Vec<(Vec3, Vec3)> {
+        let mut rng = thread_rng();
+        match self {
+            SpreadStyle::CIRCULAR => vec![(Vec3::new(1., 0., 0.), Vec3::new(0., 0., 0.))],
+            _ => todo!(),
+        }
+    }
+}
+
+fn letter_to_bullet_info(c: char) -> Option<BulletInfo> {
+    // TODO: how many
+    // TODO: what pattern
+    // TODO: what velocity
+    // TODO: starting positions
+    use SpreadStyle::*;
+
+    match c {
+        'a' => todo!(),
+        'i' => Some(BulletInfo {
+            quantity: 12,
+            spread_style: CIRCULAR,
+            letter_display: 'i',
+            velocity: Vec3::new(12., 12., 0.),
+            bullet_mode: LetterBulletMode::Straight,
+        }),
+        _ => None,
     }
 }
