@@ -1,7 +1,8 @@
 use crate::game_plugin::SystemLabels::GatherInput;
-use bevy::prelude::*;
+use bevy::{core::FixedTimestep, prelude::*};
 use bevy_prototype_lyon::prelude::*;
 use rand::{thread_rng, Rng};
+use std::f32::consts::TAU;
 
 use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
@@ -24,7 +25,12 @@ impl Plugin for BossPlugin {
             SystemSet::on_update(GameState::Boss)
                 .with_system(boss_letter_swarm)
                 .with_system(set_keyboard_actions_boss_mode.label(GatherInput))
-                .with_system(update_floor_words.after(GatherInput))
+                .with_system(update_floor_words.after(GatherInput)),
+        )
+        // TODO: these are being run even when we're not in GameState::Boss. :(
+        .add_system_set(
+            SystemSet::on_update(GameState::Boss)
+                .with_run_criteria(FixedTimestep::step(1. / 60.))
                 .with_system(boss_movement)
                 .with_system(letter_bullet_movement),
         );
@@ -55,6 +61,7 @@ struct LetterBullet {
 #[derive(Clone)]
 enum LetterBulletMode {
     Straight,
+    StraightWithDrag(f32), // drag value
 }
 
 fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -193,7 +200,11 @@ fn boss_letter_swarm(
 }
 
 fn boss_movement(time: Res<Time>, mut boss: Query<(&mut Transform, &mut Boss)>) {
-    let (mut transform, mut boss) = boss.get_single_mut().unwrap();
+    let boss = match boss.get_single_mut() {
+        Ok(boss) => boss,
+        Err(_) => return,
+    };
+    let (mut transform, mut boss) = boss;
     let mut rng = thread_rng();
 
     let velocity_change = Vec3::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.);
@@ -359,8 +370,6 @@ fn update_floor_words(
     mut action: ResMut<KeyActions>,
     mut floor_words: Query<(&BossFloorWord, &mut Text, &Transform)>,
 ) {
-    let screen_to_shape: Vec3 = Vec3::new(SCREEN_WIDTH / 2., SCREEN_HEIGHT / 2., 0.);
-
     let string_to_match = action.char_stack.iter().collect::<String>();
 
     // Make letters yellow, and do things if you hit spacebar
@@ -384,7 +393,6 @@ fn update_floor_words(
                     &mut commands,
                     &asset_server,
                     c,
-                    Vec3::new(12., 12., 0.),
                     transform.translation.x,
                     transform.translation.y,
                 );
@@ -393,10 +401,27 @@ fn update_floor_words(
     }
 }
 
-fn letter_bullet_movement(time: Res<Time>, mut movement_query: Query<(&mut Style, &LetterBullet)>) {
-    for (mut style, letter) in movement_query.iter_mut() {
-        style.position.left += (letter.velocity * time.delta_seconds()).x;
-        style.position.bottom += (letter.velocity * time.delta_seconds()).y;
+fn letter_bullet_movement(
+    time: Res<Time>,
+    mut movement_query: Query<(&mut Style, &mut LetterBullet)>,
+) {
+    for (mut style, mut letter) in movement_query.iter_mut() {
+        match letter.mode {
+            LetterBulletMode::Straight => {
+                let delta = letter.velocity * time.delta_seconds();
+
+                style.position.left += delta.x;
+                style.position.bottom += delta.y;
+            }
+            LetterBulletMode::StraightWithDrag(drag) => {
+                let new_velocity = letter.velocity * (1. - drag);
+                letter.velocity = new_velocity;
+
+                let delta = new_velocity * time.delta_seconds();
+                style.position.left += delta.x;
+                style.position.bottom += delta.y;
+            }
+        }
     }
 }
 
@@ -404,7 +429,6 @@ fn spawn_floor_bullets(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     letter: char,
-    velocity: Vec3,
     offset_left: f32,
     offset_bottom: f32,
 ) {
@@ -412,9 +436,9 @@ fn spawn_floor_bullets(
         Some(i) => i,
         None => return,
     };
-    let angles_and_positions = info.spread_style.random_angles_and_positions(info.quantity);
+    let positions_and_velocities = info.spread_style.random_positions_velocities(info.quantity);
 
-    for (angle, position) in angles_and_positions {
+    for (position, velocity) in positions_and_velocities {
         commands
             .spawn()
             .insert_bundle(TextBundle {
@@ -433,10 +457,10 @@ fn spawn_floor_bullets(
                         horizontal: HorizontalAlign::Center,
                     },
                     sections: vec![TextSection {
-                        value: letter.to_string(),
+                        value: info.letter_display.to_string(),
                         style: TextStyle {
                             font: asset_server.load("fonts/OverpassMono-Bold.ttf"),
-                            font_size: BOSS_LETTER_FONT_SIZE,
+                            font_size: BOSS_LETTER_FONT_SIZE / 2.,
                             color: Color::WHITE,
                         },
                     }],
@@ -451,24 +475,55 @@ fn spawn_floor_bullets(
 }
 
 struct BulletInfo {
-    quantity: u32,
+    quantity: usize,
     spread_style: SpreadStyle,
     letter_display: char,
-    velocity: Vec3,
     bullet_mode: LetterBulletMode,
 }
 
 enum SpreadStyle {
-    CIRCULAR,
+    Star,
+    Circular,
     X,
 }
 
 impl SpreadStyle {
-    fn random_angles_and_positions(&self, quantity: u32) -> Vec<(Vec3, Vec3)> {
+    fn random_positions_velocities(&self, quantity: usize) -> Vec<(Vec3, Vec3)> {
         let mut rng = thread_rng();
         match self {
-            SpreadStyle::CIRCULAR => vec![(Vec3::new(1., 0., 0.), Vec3::new(0., 0., 0.))],
-            _ => todo!(),
+            SpreadStyle::Circular => (0..quantity)
+                .into_iter()
+                .map(|_| {
+                    let angle: f32 = rng.gen_range(0.0..TAU);
+                    let magnitude: f32 = rng.gen_range(400.0..600.0);
+
+                    let velocity = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.);
+
+                    (Vec3::new(0., 0., 0.), velocity)
+                })
+                .collect(),
+            SpreadStyle::Star => (0..quantity)
+                .into_iter()
+                .map(|i| {
+                    let angle: f32 = i as f32 * TAU * (1. / 6.);
+                    let magnitude: f32 = rng.gen_range(200.0..300.0);
+
+                    let velocity = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.);
+
+                    (Vec3::new(0., 0., 0.), velocity)
+                })
+                .collect(),
+            SpreadStyle::X => (0..quantity)
+                .into_iter()
+                .map(|i| {
+                    let angle: f32 = (i as f32 * (1. / 4.) + (1. / 8.)) * TAU;
+                    let magnitude: f32 = rng.gen_range(200.0..300.0);
+
+                    let velocity = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.);
+
+                    (Vec3::new(0., 0., 0.), velocity)
+                })
+                .collect(),
         }
     }
 }
@@ -481,11 +536,22 @@ fn letter_to_bullet_info(c: char) -> Option<BulletInfo> {
     use SpreadStyle::*;
 
     match c {
+        'e' => Some(BulletInfo {
+            quantity: 8,
+            spread_style: Circular,
+            letter_display: 'E',
+            bullet_mode: LetterBulletMode::StraightWithDrag(0.05),
+        }),
         'i' => Some(BulletInfo {
             quantity: 12,
-            spread_style: CIRCULAR,
-            letter_display: 'i',
-            velocity: Vec3::new(12., 12., 0.),
+            spread_style: Star,
+            letter_display: 'I',
+            bullet_mode: LetterBulletMode::Straight,
+        }),
+        'x' => Some(BulletInfo {
+            quantity: 12,
+            spread_style: X,
+            letter_display: 'X',
             bullet_mode: LetterBulletMode::Straight,
         }),
         _ => None,
