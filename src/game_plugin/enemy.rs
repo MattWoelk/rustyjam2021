@@ -11,6 +11,7 @@ use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
 use rand::{thread_rng, Rng};
 
+use super::player::spawn_particle_burst;
 use super::PlayInfo;
 use super::PlayState;
 use super::PHI;
@@ -212,7 +213,7 @@ fn check_lose(
     mut commands: Commands,
     mut state: ResMut<State<GameState>>,
     mut key_actions: ResMut<KeyActions>,
-    mut enemies: Query<(&Transform, &mut Text, Entity, &Enemy)>,
+    mut enemies: Query<(&Transform, Entity, &Enemy)>,
 ) {
     if *state.current() == GameState::PlayingLose {
         return;
@@ -223,7 +224,7 @@ fn check_lose(
         return;
     }
 
-    for (enemy_transform, mut text, entity, enemy) in enemies.iter_mut() {
+    for (enemy_transform, entity, enemy) in enemies.iter_mut() {
         // TODO: this logic might not be very precise, if font size changes, etc.
         // For some reason the enemy transform isn't getting set on the first frame, so we have to check for default here
         if enemy_transform.translation.y < -KILL_LINE_Y
@@ -232,6 +233,13 @@ fn check_lose(
             // TODO: add the letter to the tray
             commands.entity(entity).despawn();
             key_actions.char_stack.push(enemy.letter);
+
+            let screen_to_shape: Vec3 = Vec3::new(SCREEN_WIDTH / 2., SCREEN_HEIGHT / 2., 0.); // TODO: this shouldn't need to be here. Too weird.
+            spawn_particle_burst(
+                &mut commands,
+                &(enemy_transform.translation - screen_to_shape),
+                Color::WHITE,
+            );
         }
     }
 }

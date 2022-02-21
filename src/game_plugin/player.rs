@@ -110,7 +110,7 @@ fn spawn_word_removal_particles(
     }
 }
 
-fn spawn_particle_burst(commands: &mut Commands, location: &Vec3, color: Color) {
+pub fn spawn_particle_burst(commands: &mut Commands, location: &Vec3, color: Color) {
     let shape = shapes::Rectangle {
         extents: Vec2::new(20., 20.),
         origin: RectangleOrigin::Center,
