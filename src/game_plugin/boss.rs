@@ -239,13 +239,15 @@ fn spawn_words_on_the_ground(
 
     // TODO: have this only work in debug mode.
     let backup_words = vec![
-        "one".to_string(),
-        "two".to_string(),
-        "three".to_string(),
-        "four".to_string(),
-        "five".to_string(),
-        "six".to_string(),
-        "seven".to_string(),
+        "the".to_string(),
+        "quick".to_string(),
+        "brown".to_string(),
+        "fox".to_string(),
+        "jumps".to_string(),
+        "over".to_string(),
+        "the".to_string(),
+        "lazy".to_string(),
+        "dog".to_string(),
     ];
 
     if words.is_empty() {
