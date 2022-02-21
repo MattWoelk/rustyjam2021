@@ -356,7 +356,7 @@ fn set_keyboard_actions_boss_mode(
 fn update_floor_words(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    action: Res<KeyActions>,
+    mut action: ResMut<KeyActions>,
     mut floor_words: Query<(&BossFloorWord, &mut Text, &Transform)>,
 ) {
     let screen_to_shape: Vec3 = Vec3::new(SCREEN_WIDTH / 2., SCREEN_HEIGHT / 2., 0.);
@@ -376,6 +376,8 @@ fn update_floor_words(
         if action.space_pressed && floor_word.word == string_to_match {
             // TODO: reset action
             // TODO: send in modifiers, if the word contains those certain letters
+
+            action.char_stack.clear();
 
             for c in floor_word.word.chars() {
                 spawn_floor_bullets(
