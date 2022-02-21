@@ -36,7 +36,7 @@ fn spawn_camera(mut commands: Commands) {
 
 fn shoot_enemies_with_keypresses(
     mut commands: Commands,
-    key_actions: ResMut<KeyActions>,
+    key_actions: Res<KeyActions>,
     enemies: Query<(Entity, &Transform, &Enemy)>,
 ) {
     // subtract this to go from screen/bevy space to shape space

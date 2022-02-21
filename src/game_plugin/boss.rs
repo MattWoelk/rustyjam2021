@@ -481,7 +481,6 @@ fn letter_to_bullet_info(c: char) -> Option<BulletInfo> {
     use SpreadStyle::*;
 
     match c {
-        'a' => todo!(),
         'i' => Some(BulletInfo {
             quantity: 12,
             spread_style: CIRCULAR,

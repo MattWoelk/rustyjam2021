@@ -209,27 +209,29 @@ fn move_enemy(
 }
 
 fn check_lose(
+    mut commands: Commands,
     mut state: ResMut<State<GameState>>,
-    key_actions: ResMut<KeyActions>,
-    mut enemies: Query<(&Transform, &mut Text), With<Enemy>>,
+    mut key_actions: ResMut<KeyActions>,
+    mut enemies: Query<(&Transform, &mut Text, Entity, &Enemy)>,
 ) {
     if *state.current() == GameState::PlayingLose {
         return;
     }
 
-    for (enemy_transform, mut text) in enemies.iter_mut() {
+    if key_actions.char_stack.clone().len() > TRAY_SIZE {
+        state.push(GameState::PlayingLose).unwrap();
+        return;
+    }
+
+    for (enemy_transform, mut text, entity, enemy) in enemies.iter_mut() {
         // TODO: this logic might not be very precise, if font size changes, etc.
         // For some reason the enemy transform isn't getting set on the first frame, so we have to check for default here
         if enemy_transform.translation.y < -KILL_LINE_Y
             && enemy_transform.translation != Default::default()
         {
-            state.push(GameState::PlayingLose).unwrap();
-            text.sections[0].style.color = Color::RED;
-            return;
+            // TODO: add the letter to the tray
+            commands.entity(entity).despawn();
+            key_actions.char_stack.push(enemy.letter);
         }
-    }
-
-    if key_actions.char_stack.clone().len() > TRAY_SIZE {
-        state.push(GameState::PlayingLose).unwrap();
     }
 }
