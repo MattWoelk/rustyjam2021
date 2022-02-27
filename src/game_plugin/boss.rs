@@ -55,6 +55,7 @@ struct BossFloorWord {
 #[derive(Component)]
 struct LetterBullet {
     velocity: Vec3,
+    time_left: f32,
     mode: LetterBulletMode,
 }
 
@@ -404,10 +405,11 @@ fn update_floor_words(
 }
 
 fn letter_bullet_movement(
+    mut commands: Commands,
     time: Res<Time>,
-    mut movement_query: Query<(&mut Style, &mut LetterBullet)>,
+    mut movement_query: Query<(&mut Style, &mut LetterBullet, Entity)>,
 ) {
-    for (mut style, mut letter) in movement_query.iter_mut() {
+    for (mut style, mut letter, entity) in movement_query.iter_mut() {
         match letter.mode {
             LetterBulletMode::Straight => {
                 let delta = letter.velocity * time.delta_seconds();
@@ -423,6 +425,12 @@ fn letter_bullet_movement(
                 style.position.left += delta.x;
                 style.position.bottom += delta.y;
             }
+        }
+
+        letter.time_left -= time.delta_seconds();
+
+        if letter.time_left <= 0. {
+            commands.entity(entity).despawn();
         }
     }
 }
@@ -472,6 +480,7 @@ fn spawn_floor_bullets(
             .insert(LetterBullet {
                 velocity,
                 mode: info.bullet_mode.clone(),
+                time_left: 2.,
             });
     }
 }
