@@ -10,6 +10,7 @@ use super::{actions::KeyActions, enemy::Enemy, GameState};
 
 const BOSS_LETTER_FONT_SIZE: f32 = 60.;
 const BOSS_RADIUS: f32 = 100.;
+const BOSS_STARTING_HEALTH: u32 = 26;
 
 pub struct BossPlugin;
 
@@ -85,12 +86,12 @@ fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .insert(Boss {
             velocity: Vec3::default(),
-            health: 100,
+            health: BOSS_STARTING_HEALTH,
         })
         .insert(Transform::from_translation(Vec3::new(0., 0., 0.)));
 
     let mut rng = thread_rng();
-    for _ in 0..26 {
+    for _ in 0..BOSS_STARTING_HEALTH {
         let left: f32 = rng.gen_range(-1.0..1.0) * 50.;
         let bottom: f32 = rng.gen_range(-1.0..1.0) * 50.;
 
@@ -163,28 +164,11 @@ fn boss_letter_swarm(
     mut letters: Query<(&mut Style, &mut BossLetter)>,
     boss: Query<&Transform, With<Boss>>,
 ) {
-    // subtract this to go from screen/bevy space to shape space
-    let screen_to_shape: Vec3 = Vec3::new(
-        SCREEN_WIDTH / 2.,
-        SCREEN_HEIGHT / 2. - (BOSS_LETTER_FONT_SIZE / 2.),
-        0.,
-    );
     let mut rng = thread_rng();
 
     if let Ok(boss_transform) = boss.get_single() {
         for (mut style, mut letter) in letters.iter_mut() {
-            let left = style.position.left;
-            let left = match left {
-                Val::Px(left) => left,
-                _ => 0.,
-            };
-            let bottom = style.position.bottom;
-            let bottom = match bottom {
-                Val::Px(bottom) => bottom,
-                _ => 0.,
-            };
-            let letter_location = Vec3::new(left, bottom, 0.);
-            let letter_location = letter_location - screen_to_shape;
+            let letter_location = style_to_position(&style);
 
             let letter_to_target = boss_transform.translation - letter_location;
 
@@ -581,17 +565,29 @@ fn letter_to_bullet_info(c: char) -> Option<BulletInfo> {
 fn check_boss_letter_bullet_overlaps(
     mut commands: Commands,
     mut boss: Query<(&Transform, &mut Boss)>,
+    mut boss_letters: Query<Entity, With<BossLetter>>,
     movement_query: Query<(&Style, &LetterBullet, Entity)>,
 ) {
+    let mut health_lost: u32 = 0;
     if let Ok((boss_transform, mut boss)) = boss.get_single_mut() {
-        for (style, mut letter, entity) in movement_query.iter() {
+        for (style, _, entity) in movement_query.iter() {
             // TODO: compare letter position to boss position. If it's within range, then damage the boss
             let pos = style_to_position(style);
             if pos.distance(boss_transform.translation) < BOSS_RADIUS {
                 boss.health -= 1;
+                health_lost += 1;
                 dbg!(boss.health);
                 commands.entity(entity).despawn();
             }
+        }
+
+        // delete boss letters based on how many bullets it took this frame.
+        for entity in boss_letters.iter_mut() {
+            if health_lost == 0 {
+                break;
+            }
+            commands.entity(entity).despawn();
+            health_lost -= 1;
         }
     }
 }
