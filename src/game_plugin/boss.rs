@@ -8,7 +8,8 @@ use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
 use super::{actions::KeyActions, enemy::Enemy, GameState};
 
-const BOSS_LETTER_FONT_SIZE: f32 = 60.0;
+const BOSS_LETTER_FONT_SIZE: f32 = 60.;
+const BOSS_RADIUS: f32 = 100.;
 
 pub struct BossPlugin;
 
@@ -25,7 +26,8 @@ impl Plugin for BossPlugin {
             SystemSet::on_update(GameState::Boss)
                 .with_system(boss_letter_swarm)
                 .with_system(set_keyboard_actions_boss_mode.label(GatherInput))
-                .with_system(update_floor_words.after(GatherInput)),
+                .with_system(update_floor_words.after(GatherInput))
+                .with_system(check_boss_letter_bullet_overlaps),
         )
         // TODO: these are being run even when we're not in GameState::Boss. :(
         .add_system_set(
@@ -40,6 +42,7 @@ impl Plugin for BossPlugin {
 #[derive(Component)]
 pub struct Boss {
     velocity: Vec3,
+    health: u32,
 }
 
 #[derive(Component)]
@@ -67,7 +70,7 @@ enum LetterBulletMode {
 
 fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
     let boss_body_shape = shapes::Circle {
-        radius: 100.,
+        radius: BOSS_RADIUS,
         center: Default::default(),
     };
     commands
@@ -82,6 +85,7 @@ fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .insert(Boss {
             velocity: Vec3::default(),
+            health: 100,
         })
         .insert(Transform::from_translation(Vec3::new(0., 0., 0.)));
 
@@ -572,4 +576,43 @@ fn letter_to_bullet_info(c: char) -> Option<BulletInfo> {
         }),
         _ => None,
     }
+}
+
+fn check_boss_letter_bullet_overlaps(
+    mut commands: Commands,
+    mut boss: Query<(&Transform, &mut Boss)>,
+    movement_query: Query<(&Style, &LetterBullet, Entity)>,
+) {
+    if let Ok((boss_transform, mut boss)) = boss.get_single_mut() {
+        for (style, mut letter, entity) in movement_query.iter() {
+            // TODO: compare letter position to boss position. If it's within range, then damage the boss
+            let pos = style_to_position(style);
+            if pos.distance(boss_transform.translation) < BOSS_RADIUS {
+                boss.health -= 1;
+                dbg!(boss.health);
+                commands.entity(entity).despawn();
+            }
+        }
+    }
+}
+
+fn style_to_position(style: &Style) -> Vec3 {
+    let screen_to_shape: Vec3 = Vec3::new(
+        SCREEN_WIDTH / 2.,
+        SCREEN_HEIGHT / 2. - (BOSS_LETTER_FONT_SIZE / 2.),
+        0.,
+    );
+
+    let left = style.position.left;
+    let left = match left {
+        Val::Px(left) => left,
+        _ => 0.,
+    };
+    let bottom = style.position.bottom;
+    let bottom = match bottom {
+        Val::Px(bottom) => bottom,
+        _ => 0.,
+    };
+
+    Vec3::new(left, bottom, 0.) - screen_to_shape
 }
