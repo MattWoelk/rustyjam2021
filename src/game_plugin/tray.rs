@@ -96,14 +96,10 @@ fn tray_update(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With
         };
 
         // Don't show any as yellow if we are overflowed
-        // TODO: 10 should not be a magic number.
-        //       https://crates.io/crates/bevy_asset_ron
-        //       https://github.com/bevyengine/bevy/blob/main/examples/asset/hot_asset_reloading.rs
-        if stack.len() > 10 {
-            split_index = 10;
+        if stack.len() > TRAY_SIZE {
+            split_index = TRAY_SIZE;
         }
 
-        // TODO: 10 should not be a magic number.
         let stack_length = stack.len().min(TRAY_SIZE);
 
         text.sections[0].value = stack[0..split_index]
@@ -116,12 +112,9 @@ fn tray_update(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With
             .collect::<String>()
             .to_string()
             .to_uppercase();
-        // TODO: 10 should not be a magic number.
         text.sections[2].value = "_".repeat(TRAY_SIZE - stack_length);
 
-        // TODO: 10 should not be a magic number.
         if stack.len() > TRAY_SIZE {
-            // TODO: 10 should not be a magic number.
             text.sections[3].value = stack[TRAY_SIZE..]
                 .iter()
                 .collect::<String>()
