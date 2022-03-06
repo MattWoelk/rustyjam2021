@@ -398,6 +398,10 @@ fn update_floor_words(
                     c,
                     transform.translation.x,
                     transform.translation.y,
+                    match c {
+                        'x' | 'i' => 2.,
+                        _ => 1.,
+                    },
                 );
             }
         }
@@ -441,6 +445,7 @@ fn spawn_floor_bullets(
     letter: char,
     offset_left: f32,
     offset_bottom: f32,
+    duration: f32,
 ) {
     let info = match letter_to_bullet_info(letter) {
         Some(i) => i,
@@ -480,7 +485,7 @@ fn spawn_floor_bullets(
             .insert(LetterBullet {
                 velocity,
                 mode: info.bullet_mode.clone(),
-                time_left: 2.,
+                time_left: duration,
             });
     }
 }
