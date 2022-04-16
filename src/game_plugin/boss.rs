@@ -571,7 +571,7 @@ fn check_boss_letter_bullet_overlaps(
     let mut health_lost: u32 = 0;
     if let Ok((boss_transform, mut boss)) = boss.get_single_mut() {
         for (style, _, entity) in movement_query.iter() {
-            // TODO: compare letter position to boss position. If it's within range, then damage the boss
+            // Compare letter position to boss position. If it's within range, then damage the boss
             let pos = style_to_position(style);
             if pos.distance(boss_transform.translation) < BOSS_RADIUS {
                 boss.health -= 1;
@@ -581,7 +581,7 @@ fn check_boss_letter_bullet_overlaps(
             }
         }
 
-        // delete boss letters based on how many bullets it took this frame.
+        // Delete boss letters based on how many bullets it took this frame.
         for entity in boss_letters.iter_mut() {
             if health_lost == 0 {
                 break;
