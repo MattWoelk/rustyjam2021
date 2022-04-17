@@ -3,8 +3,8 @@ use bevy::prelude::*;
 
 pub struct SecondsTimerPlugin;
 
-#[derive(Component)]
-struct SecondsTimer;
+#[derive(Component, Deref, DerefMut)]
+struct SecondsTimer(Timer);
 
 impl Plugin for SecondsTimerPlugin {
     fn build(&self, app: &mut App) {
@@ -42,17 +42,16 @@ fn spawn_timer(mut commands: Commands, asset_server: Res<AssetServer>) {
             ),
             ..Default::default()
         })
-        .insert(Timer::from_seconds(9999., true))
-        .insert(SecondsTimer);
+        .insert(SecondsTimer(Timer::from_seconds(9999., true)));
 }
 
 fn update_timer(
     time: Res<Time>,
-    mut query: Query<(&mut Text, &mut Timer, With<SecondsTimer>)>,
+    mut query: Query<(&mut Text, &mut SecondsTimer)>,
     state: ResMut<State<GameState>>,
 ) {
     if state.current() == &GameState::Playing {
-        for (mut text, mut timer, _) in query.iter_mut() {
+        for (mut text, mut timer) in query.iter_mut() {
             timer.tick(time.delta());
             let total = timer.elapsed_secs() + timer.times_finished() as f32;
             text.sections[0].value = format!("{total:.2} seconds");
