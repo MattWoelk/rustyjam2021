@@ -31,7 +31,7 @@ impl Plugin for PlayerPlugin {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::default());
 }
 
 fn shoot_enemies_with_keypresses(

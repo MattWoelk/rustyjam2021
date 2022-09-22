@@ -21,13 +21,12 @@ impl Plugin for TrayPlugin {
 
 fn setup_tray(mut commands: Commands, asset_server: Res<AssetServer>) {
     // UI camera
-    commands.spawn_bundle(UiCameraBundle::default());
 
     commands
         .spawn_bundle(TextBundle {
             style: Style {
                 position_type: PositionType::Absolute,
-                position: Rect {
+                position: UiRect {
                     left: Val::Px(5.0),
                     bottom: Val::Px(5.0),
                     right: Val::Px(15.0),

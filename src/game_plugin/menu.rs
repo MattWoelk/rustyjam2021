@@ -36,12 +36,11 @@ fn setup_menu(
     font_assets: Res<FontAssets>,
     button_colors: Res<ButtonColors>,
 ) {
-    commands.spawn_bundle(UiCameraBundle::default());
     commands
         .spawn_bundle(ButtonBundle {
             style: Style {
                 size: Size::new(Val::Px(120.0), Val::Px(50.0)),
-                margin: Rect::all(Val::Auto),
+                margin: UiRect::all(Val::Auto),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..Default::default()

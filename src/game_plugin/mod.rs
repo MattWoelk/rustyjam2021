@@ -93,6 +93,6 @@ impl Plugin for GamePlugin {
             .add_plugin(TrayPlugin)
             .add_plugin(SecondsTimerPlugin)
             //.add_plugin(WorldInspectorPlugin::new())
-            .add_system(bevy::input::system::exit_on_esc_system);
+            .add_system(bevy::window::close_on_esc);
     }
 }

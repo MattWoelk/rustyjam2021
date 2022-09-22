@@ -166,7 +166,7 @@ fn enemy_spawner(
             .insert_bundle(TextBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
-                    position: Rect {
+                    position: UiRect {
                         left: Val::Px(SCREEN_WIDTH * screen_percent),
                         bottom: Val::Px(SCREEN_HEIGHT * 3. / 4.),
                         ..Default::default()

@@ -20,7 +20,7 @@ fn spawn_timer(mut commands: Commands, asset_server: Res<AssetServer>) {
                 align_self: AlignSelf::Center,
                 align_content: AlignContent::Center,
                 position_type: PositionType::Absolute,
-                position: Rect {
+                position: UiRect {
                     left: Val::Px(425.),
                     right: Val::Px(25.),
                     bottom: Val::Px(540. - 50.),
@@ -28,18 +28,18 @@ fn spawn_timer(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 ..Default::default()
             },
-            text: Text::with_section(
+            text: Text::from_section(
                 "123.12s",
                 TextStyle {
                     font: asset_server.load("fonts/ShareTechMono-Regular.ttf"),
                     font_size: 25.0,
                     color: Color::WHITE,
                 },
-                TextAlignment {
-                    horizontal: HorizontalAlign::Center,
-                    ..Default::default()
-                },
-            ),
+            )
+            .with_alignment(TextAlignment {
+                horizontal: HorizontalAlign::Center,
+                ..Default::default()
+            }),
             ..Default::default()
         })
         .insert(SecondsTimer(Timer::from_seconds(9999., true)));
@@ -53,7 +53,7 @@ fn update_timer(
     if state.current() == &GameState::Playing {
         for (mut text, mut timer) in query.iter_mut() {
             timer.tick(time.delta());
-            let total = timer.elapsed_secs() + timer.times_finished() as f32;
+            let total = timer.elapsed_secs() + timer.times_finished_this_tick() as f32;
             text.sections[0].value = format!("{total:.2} seconds");
         }
     }

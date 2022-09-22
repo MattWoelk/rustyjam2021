@@ -1,5 +1,5 @@
 use crate::game_plugin::SystemLabels::GatherInput;
-use bevy::{core::FixedTimestep, prelude::*};
+use bevy::{prelude::*, time::FixedTimestep};
 use bevy_prototype_lyon::prelude::*;
 use rand::{thread_rng, Rng};
 use std::f32::consts::TAU;
@@ -123,7 +123,7 @@ fn spawn_boss_letter(
         .insert_bundle(TextBundle {
             style: Style {
                 position_type: PositionType::Absolute,
-                position: Rect {
+                position: UiRect {
                     left: Val::Px(SCREEN_WIDTH * 0.5 + offset_left),
                     bottom: Val::Px(SCREEN_HEIGHT * 0.5 + offset_bottom),
                     ..Default::default()
@@ -257,7 +257,7 @@ fn spawn_words_on_the_ground(
             .insert_bundle(TextBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
-                    position: Rect {
+                    position: UiRect {
                         left: Val::Px(left),
                         bottom: Val::Px(bottom),
                         ..Default::default()
@@ -447,7 +447,7 @@ fn spawn_floor_bullets(
             .insert_bundle(TextBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
-                    position: Rect {
+                    position: UiRect {
                         left: Val::Px(/*SCREEN_WIDTH * 0.5 + */ offset_left + position.x),
                         bottom: Val::Px(/*SCREEN_HEIGHT * 0.5 + */ offset_bottom + position.y),
                         ..Default::default()
