@@ -16,7 +16,7 @@ impl Plugin for ActionsPlugin {
                 SystemSet::on_update(GameState::Playing)
                     .label(GatherInput)
                     .with_system(set_keyboard_actions.label(GatherInput))
-                    .with_system(set_debug_keyboard_actions.label(GatherInput)),
+                    .with_system(set_debug_keyboard_actions.after(set_keyboard_actions)),
             );
     }
 }
