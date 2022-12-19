@@ -4,7 +4,8 @@
 mod game_plugin;
 
 //use bevy::log::LogPlugin;
-use bevy::prelude::{App, ClearColor, Color, WindowDescriptor};
+use bevy::prelude::*;
+use bevy::window::WindowPlugin;
 use bevy::DefaultPlugins;
 use game_plugin::GamePlugin;
 
@@ -19,13 +20,15 @@ fn main() {
     app
         // .insert_resource(Msaa { samples: 4 })
         .insert_resource(ClearColor(Color::rgb(0.4, 0.4, 0.4)))
-        .insert_resource(WindowDescriptor {
-            width: SCREEN_WIDTH,
-            height: SCREEN_HEIGHT,
-            title: "Bevy game".to_string(), // ToDo
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                width: SCREEN_WIDTH,
+                height: SCREEN_HEIGHT,
+                title: "Bevy game".to_string(),
+                ..Default::default()
+            },
             ..Default::default()
-        })
-        .add_plugins(DefaultPlugins)
+        }))
         //.add_plugins_with(DefaultPlugins, |plugins| plugins.disable::<LogPlugin>())
         .add_plugin(ShapePlugin)
         .add_plugin(GamePlugin);

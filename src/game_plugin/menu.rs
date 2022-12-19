@@ -14,9 +14,10 @@ impl Plugin for MenuPlugin {
     }
 }
 
+#[derive(Resource)]
 struct ButtonColors {
-    normal: UiColor,
-    hovered: UiColor,
+    normal: BackgroundColor,
+    hovered: BackgroundColor,
 }
 
 impl FromWorld for ButtonColors {
@@ -34,23 +35,25 @@ struct PlayButton;
 fn setup_menu(
     mut commands: Commands,
     font_assets: Res<FontAssets>,
-    button_colors: Res<ButtonColors>,
+    //button_colors: Res<ButtonColors>,
 ) {
     commands
-        .spawn_bundle(ButtonBundle {
-            style: Style {
-                size: Size::new(Val::Px(120.0), Val::Px(50.0)),
-                margin: UiRect::all(Val::Auto),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
+        .spawn((
+            ButtonBundle {
+                style: Style {
+                    size: Size::new(Val::Px(120.0), Val::Px(50.0)),
+                    margin: UiRect::all(Val::Auto),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..Default::default()
+                },
+                //color: button_colors.normal,
                 ..Default::default()
             },
-            color: button_colors.normal,
-            ..Default::default()
-        })
-        .insert(PlayButton)
+            PlayButton,
+        ))
         .with_children(|parent| {
-            parent.spawn_bundle(TextBundle {
+            parent.spawn(TextBundle {
                 text: Text {
                     sections: vec![TextSection {
                         value: "Play".to_string(),
@@ -67,7 +70,12 @@ fn setup_menu(
         });
 }
 
-type ButtonInteraction<'a> = (Entity, &'a Interaction, &'a mut UiColor, &'a Children);
+type ButtonInteraction<'a> = (
+    Entity,
+    &'a Interaction,
+    &'a mut BackgroundColor,
+    &'a Children,
+);
 
 fn click_play_button(
     mut commands: Commands,

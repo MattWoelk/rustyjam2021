@@ -31,7 +31,7 @@ impl Plugin for PlayerPlugin {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 }
 
 fn shoot_enemies_with_keypresses(
@@ -126,7 +126,7 @@ pub fn spawn_particle_burst(commands: &mut Commands, location: &Vec3, color: Col
         let location = *location + (velocity / 15.);
 
         commands
-            .spawn_bundle(GeometryBuilder::build_as(
+            .spawn(GeometryBuilder::build_as(
                 &shape,
                 DrawMode::Fill(FillMode {
                     options: Default::default(),

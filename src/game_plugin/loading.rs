@@ -25,19 +25,19 @@ impl Plugin for LoadingPlugin {
 // the following asset collections will be loaded during the State `GameState::Loading`
 // when done loading, they will be inserted as resources (see https://github.com/NiklasEi/bevy_asset_loader)
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct FontAssets {
     #[asset(path = "fonts/FiraSans-Bold.ttf")]
     pub fira_sans: Handle<Font>,
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct AudioAssets {
     #[asset(path = "audio/flying.ogg")]
     pub flying: Handle<AudioSource>,
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 pub struct TextureAssets {
     #[asset(path = "textures/bevy.png")]
     pub texture_bevy: Handle<Image>,
@@ -45,6 +45,7 @@ pub struct TextureAssets {
     pub texture_tileset: Handle<Image>,
 }
 
+#[derive(Resource)]
 pub struct TextureAtlases {
     pub main_sprite_sheet: Handle<TextureAtlas>,
 }
@@ -56,7 +57,8 @@ impl FromWorld for TextureAtlases {
             .unwrap()
             .texture_tileset
             .clone();
-        let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10);
+        let texture_atlas =
+            TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 24, 10, None, None);
         let mut texture_atlases = world.get_resource_mut::<Assets<TextureAtlas>>().unwrap();
         let texture_atlas_handle = texture_atlases.add(texture_atlas);
 

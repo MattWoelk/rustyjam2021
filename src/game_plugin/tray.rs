@@ -1,4 +1,5 @@
 use crate::game_plugin::SystemLabels;
+use crate::SCREEN_HEIGHT;
 use crate::{game_plugin::actions::KeyActions, TRAY_SIZE};
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 
@@ -22,15 +23,15 @@ impl Plugin for TrayPlugin {
 fn setup_tray(mut commands: Commands, asset_server: Res<AssetServer>) {
     // UI camera
 
-    commands
-        .spawn_bundle(TextBundle {
+    commands.spawn((
+        TextBundle {
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {
                     left: Val::Px(5.0),
-                    bottom: Val::Px(5.0),
+                    bottom: Val::Px(SCREEN_HEIGHT - 90.0),
                     right: Val::Px(15.0),
-                    top: Val::Px(0.0),
+                    top: Val::Px(SCREEN_HEIGHT - 115.0),
                 },
                 ..Default::default()
             },
@@ -81,8 +82,9 @@ fn setup_tray(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ],
             },
             ..Default::default()
-        })
-        .insert(Tray);
+        },
+        Tray,
+    ));
 }
 
 fn tray_update(key_actions: ResMut<KeyActions>, mut query: Query<&mut Text, With<Tray>>) {

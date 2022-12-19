@@ -20,6 +20,9 @@ use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::prelude::*;
 
+use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
+const BOSS_LETTER_FONT_SIZE: f32 = 60.;
+
 use self::boss::BossPlugin;
 //use bevy_inspector_egui::WorldInspectorPlugin;
 
@@ -59,7 +62,7 @@ enum PlayState {
     Finished,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Resource)]
 struct PlayInfo {
     state: PlayState,
     hit_pause_timer: f32,
@@ -95,4 +98,25 @@ impl Plugin for GamePlugin {
             //.add_plugin(WorldInspectorPlugin::new())
             .add_system(bevy::window::close_on_esc);
     }
+}
+
+fn style_to_position(style: &Style) -> Vec3 {
+    let screen_to_shape: Vec3 = Vec3::new(
+        SCREEN_WIDTH / 2.,
+        SCREEN_HEIGHT / 2. - (BOSS_LETTER_FONT_SIZE / 2.),
+        0.,
+    );
+
+    let left = style.position.left;
+    let left = match left {
+        Val::Px(left) => left,
+        _ => 0.,
+    };
+    let bottom = style.position.bottom;
+    let bottom = match bottom {
+        Val::Px(bottom) => bottom,
+        _ => 0.,
+    };
+
+    Vec3::new(left, bottom, 0.) - screen_to_shape
 }

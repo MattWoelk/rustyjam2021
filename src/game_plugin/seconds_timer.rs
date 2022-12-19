@@ -14,8 +14,8 @@ impl Plugin for SecondsTimerPlugin {
 }
 
 fn spawn_timer(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn_bundle(TextBundle {
+    commands.spawn((
+        TextBundle {
             style: Style {
                 align_self: AlignSelf::Center,
                 align_content: AlignContent::Center,
@@ -41,8 +41,9 @@ fn spawn_timer(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..Default::default()
             }),
             ..Default::default()
-        })
-        .insert(SecondsTimer(Timer::from_seconds(9999., true)));
+        },
+        SecondsTimer(Timer::from_seconds(9999., TimerMode::Repeating)),
+    ));
 }
 
 fn update_timer(

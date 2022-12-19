@@ -21,6 +21,7 @@ impl Plugin for ActionsPlugin {
     }
 }
 
+#[derive(Resource)]
 pub struct KeyActions {
     pub new_press: bool,
     pub char_stack: Vec<char>,
@@ -126,7 +127,7 @@ fn find_ending_word(text: &str, all_words: &HashSet<String>) -> Option<String> {
 // TODO: put this debug stuff in its own file/system/whatever
 // TODO: disable this debug stuff when we're in --release
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub struct DebugKeyActions {
     pub boss_fight_started: bool,
 }

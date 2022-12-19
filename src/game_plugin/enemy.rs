@@ -12,6 +12,7 @@ use rand::distributions::WeightedIndex;
 use rand::{thread_rng, Rng};
 
 use super::player::spawn_particle_burst;
+use super::style_to_position;
 use super::PlayInfo;
 use super::PlayState;
 use super::PHI;
@@ -34,7 +35,7 @@ pub struct EnemyDeathParticle {
     pub velocity: Vec3,
 }
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub struct EnemySpawnTimer {
     time_since_last_spawn: f32,
     last_spawn_location: f32,
@@ -93,16 +94,17 @@ fn startup_kill_line(mut commands: Commands) {
         origin: RectangleOrigin::Center,
     };
 
-    commands
-        .spawn_bundle(GeometryBuilder::build_as(
+    commands.spawn((
+        GeometryBuilder::build_as(
             &shape,
             DrawMode::Fill(FillMode {
                 options: Default::default(),
                 color: Default::default(),
             }),
             Transform::from_translation(Vec3::new(0., KILL_LINE_Y, 0.)),
-        ))
-        .insert(KillLine);
+        ),
+        KillLine,
+    ));
 }
 
 fn enemy_spawner(
@@ -161,9 +163,8 @@ fn enemy_spawner(
         let buffer_percent = 0.1f32;
         let screen_percent = (screen_percent * (1f32 - 2f32 * buffer_percent)) + buffer_percent;
 
-        commands
-            .spawn()
-            .insert_bundle(TextBundle {
+        commands.spawn((
+            TextBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
                     position: UiRect {
@@ -188,8 +189,9 @@ fn enemy_spawner(
                     }],
                 },
                 ..Default::default()
-            })
-            .insert(Enemy { letter });
+            },
+            Enemy { letter },
+        ));
     }
 }
 
@@ -205,7 +207,12 @@ fn move_enemy(
         PlayState::HitPaused => return,
     }
     for mut style in movement_query.iter_mut() {
-        style.position.bottom += -ENEMY_FALL_SPEED * time.delta_seconds();
+        style
+            .position
+            .bottom
+            .try_add_assign(Val::Px(-ENEMY_FALL_SPEED * time.delta_seconds()))
+            .unwrap();
+        // TODO: ^-- this is moving in UI space, but ideally we're moving in world space and updating UI space to match ... eventually.
     }
 }
 
@@ -213,7 +220,7 @@ fn check_lose(
     mut commands: Commands,
     mut state: ResMut<State<GameState>>,
     mut key_actions: ResMut<KeyActions>,
-    mut enemies: Query<(&Transform, Entity, &Enemy)>,
+    mut enemies: Query<(&Style, Entity, &Enemy)>,
 ) {
     if *state.current() == GameState::PlayingLose {
         return;
@@ -224,22 +231,13 @@ fn check_lose(
         return;
     }
 
-    for (enemy_transform, entity, enemy) in enemies.iter_mut() {
+    for (enemy_style, entity, enemy) in enemies.iter_mut() {
         // TODO: this logic might not be very precise, if font size changes, etc.
-        // For some reason the enemy transform isn't getting set on the first frame, so we have to check for default here
-        if enemy_transform.translation.y < -KILL_LINE_Y
-            && enemy_transform.translation != Default::default()
-        {
-            // TODO: add the letter to the tray
+        let location = style_to_position(enemy_style);
+        if location.y < KILL_LINE_Y {
             commands.entity(entity).despawn();
             key_actions.char_stack.push(enemy.letter);
-
-            let screen_to_shape: Vec3 = Vec3::new(SCREEN_WIDTH / 2., SCREEN_HEIGHT / 2., 0.); // TODO: this shouldn't need to be here. Too weird.
-            spawn_particle_burst(
-                &mut commands,
-                &(enemy_transform.translation - screen_to_shape),
-                Color::WHITE,
-            );
+            spawn_particle_burst(&mut commands, &location, Color::WHITE);
         }
     }
 }

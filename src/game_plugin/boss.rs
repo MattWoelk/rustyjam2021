@@ -6,9 +6,10 @@ use std::f32::consts::TAU;
 
 use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
-use super::{actions::KeyActions, enemy::Enemy, GameState};
+use super::{
+    actions::KeyActions, enemy::Enemy, style_to_position, GameState, BOSS_LETTER_FONT_SIZE,
+};
 
-const BOSS_LETTER_FONT_SIZE: f32 = 60.;
 const BOSS_RADIUS: f32 = 100.;
 const BOSS_STARTING_HEALTH: u32 = 26;
 
@@ -74,21 +75,21 @@ fn spawn_boss(mut commands: Commands, asset_server: Res<AssetServer>) {
         radius: BOSS_RADIUS,
         center: Default::default(),
     };
-    commands
-        //.spawn()
-        .spawn_bundle(GeometryBuilder::build_as(
+    commands.spawn((
+        GeometryBuilder::build_as(
             &boss_body_shape,
             DrawMode::Fill(FillMode {
                 options: Default::default(),
                 color: Color::DARK_GRAY,
             }),
             Transform::default(),
-        ))
-        .insert(Boss {
+        ),
+        Boss {
             velocity: Vec3::default(),
             health: BOSS_STARTING_HEALTH,
-        })
-        .insert(Transform::from_translation(Vec3::new(0., 0., 0.)));
+        },
+        Transform::from_translation(Vec3::new(0., 0., 0.)),
+    ));
 
     let mut rng = thread_rng();
     for _ in 0..BOSS_STARTING_HEALTH {
@@ -118,9 +119,8 @@ fn spawn_boss_letter(
     offset_left: f32,
     offset_bottom: f32,
 ) {
-    commands
-        .spawn()
-        .insert_bundle(TextBundle {
+    commands.spawn((
+        TextBundle {
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {
@@ -145,8 +145,9 @@ fn spawn_boss_letter(
                 }],
             },
             ..Default::default()
-        })
-        .insert(BossLetter { velocity });
+        },
+        BossLetter { velocity },
+    ));
 }
 
 fn reset_stack(mut action: ResMut<KeyActions>) {
@@ -172,8 +173,16 @@ fn boss_letter_swarm(
 
             let letter_to_target = boss_transform.translation - letter_location;
 
-            style.position.bottom += letter.velocity.y;
-            style.position.left += letter.velocity.x;
+            style
+                .position
+                .bottom
+                .try_add_assign(Val::Px(letter.velocity.y))
+                .unwrap();
+            style
+                .position
+                .left
+                .try_add_assign(Val::Px(letter.velocity.x))
+                .unwrap();
 
             letter.velocity += 0.5 * letter_to_target * time.delta_seconds();
 
@@ -252,9 +261,8 @@ fn spawn_words_on_the_ground(
         let left = SCREEN_WIDTH * x;
         let bottom = SCREEN_HEIGHT * y;
 
-        commands
-            .spawn()
-            .insert_bundle(TextBundle {
+        commands.spawn((
+            TextBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
                     position: UiRect {
@@ -289,10 +297,11 @@ fn spawn_words_on_the_ground(
                     ],
                 },
                 ..Default::default()
-            })
-            .insert(BossFloorWord {
+            },
+            BossFloorWord {
                 word: word.to_string(),
-            });
+            },
+        ));
     }
 }
 
@@ -406,16 +415,32 @@ fn letter_bullet_movement(
             LetterBulletMode::Straight => {
                 let delta = letter.velocity * time.delta_seconds();
 
-                style.position.left += delta.x;
-                style.position.bottom += delta.y;
+                style
+                    .position
+                    .left
+                    .try_add_assign(Val::Px(delta.x))
+                    .unwrap();
+                style
+                    .position
+                    .bottom
+                    .try_add_assign(Val::Px(delta.y))
+                    .unwrap();
             }
             LetterBulletMode::StraightWithDrag(drag) => {
                 let new_velocity = letter.velocity * (1. - drag);
                 letter.velocity = new_velocity;
 
                 let delta = new_velocity * time.delta_seconds();
-                style.position.left += delta.x;
-                style.position.bottom += delta.y;
+                style
+                    .position
+                    .left
+                    .try_add_assign(Val::Px(delta.x))
+                    .unwrap();
+                style
+                    .position
+                    .bottom
+                    .try_add_assign(Val::Px(delta.y))
+                    .unwrap();
             }
         }
 
@@ -442,9 +467,8 @@ fn spawn_floor_bullets(
     let positions_and_velocities = info.spread_style.random_positions_velocities(info.quantity);
 
     for (position, velocity) in positions_and_velocities {
-        commands
-            .spawn()
-            .insert_bundle(TextBundle {
+        commands.spawn((
+            TextBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
                     position: UiRect {
@@ -469,12 +493,13 @@ fn spawn_floor_bullets(
                     }],
                 },
                 ..Default::default()
-            })
-            .insert(LetterBullet {
+            },
+            LetterBullet {
                 velocity,
                 mode: info.bullet_mode.clone(),
                 time_left: duration,
-            });
+            },
+        ));
     }
 }
 
@@ -590,25 +615,4 @@ fn check_boss_letter_bullet_overlaps(
             health_lost -= 1;
         }
     }
-}
-
-fn style_to_position(style: &Style) -> Vec3 {
-    let screen_to_shape: Vec3 = Vec3::new(
-        SCREEN_WIDTH / 2.,
-        SCREEN_HEIGHT / 2. - (BOSS_LETTER_FONT_SIZE / 2.),
-        0.,
-    );
-
-    let left = style.position.left;
-    let left = match left {
-        Val::Px(left) => left,
-        _ => 0.,
-    };
-    let bottom = style.position.bottom;
-    let bottom = match bottom {
-        Val::Px(bottom) => bottom,
-        _ => 0.,
-    };
-
-    Vec3::new(left, bottom, 0.) - screen_to_shape
 }
