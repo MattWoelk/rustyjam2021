@@ -50,7 +50,7 @@ fn shoot_enemies_with_keypresses(
     for (entity, transform, enemy) in enemies.iter() {
         if keys_pressed.contains(&enemy.letter) {
             lowest_enemy = if let Some((_, old_transform)) = lowest_enemy {
-                if old_transform.translation.y > transform.translation.y {
+                if old_transform.translation.y < transform.translation.y {
                     Some((entity, transform))
                 } else {
                     lowest_enemy
